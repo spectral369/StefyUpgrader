@@ -87,9 +87,10 @@ public class FXMLDocumentController implements Initializable {
     JFXComboBox format = null;
     JFXComboBox bitRateType = null;
     private volatile boolean running = true;
-    JFXComboBox quality  = null;
+    JFXComboBox quality = null;
     private String s = null;
     List<String> s2 = new ArrayList<>();
+     JFXCheckBox resample = null;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -144,8 +145,8 @@ public class FXMLDocumentController implements Initializable {
         chooserFile.setTitle("Select a folder");
         chooserFile.setInitialDirectory(new File(System.getProperty("user.home")));
         chooserFile.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("M4A", "*.m4a"),
-                new FileChooser.ExtensionFilter("MP3", "*.mp3")
+                new FileChooser.ExtensionFilter("MP3", "*.mp3"),
+                new FileChooser.ExtensionFilter("M4A", "*.m4a")
         );
 
         List<File> list = chooserFile.showOpenMultipleDialog(song.getScene().getWindow());
@@ -222,14 +223,32 @@ public class FXMLDocumentController implements Initializable {
         //      bitRateType.getItems().add("AVERAGE(AVR)(not available for AAC)");
         bitRateType.getItems().add("VARIABLE(VBR)(not Documented)");
 
+     
+        Label res = new Label("Resample?");
+        bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
+            if(newValue.toString().contains("VBR")){
+                if(resample!=null && hz!=null){
+                    res.setVisible(false);
+                    resample.setVisible(false);
+                    hz.setVisible(false);
+                }
+            }
+            else{
+                if(resample!=null && hz!=null){
+                    
+                    resample.setVisible(true);
+                    hz.setVisible(true);
+                }
+            }
+        });
         bitRateType.getSelectionModel().selectFirst();
 
-         Label qua =  new Label("Download Quality");
-           quality =  new JFXComboBox();
-             quality.getItems().add("Standard");
-            quality.getItems().add("High");
-            quality.getSelectionModel().selectFirst();
-        Label res = new Label("Resample?");
+        Label qua = new Label("Download Quality");
+        quality = new JFXComboBox();
+        quality.getItems().add("Standard");
+        quality.getItems().add("High");
+        quality.getSelectionModel().selectFirst();
+        
 
         hz = new JFXComboBox();
 
@@ -240,7 +259,7 @@ public class FXMLDocumentController implements Initializable {
 
         hz.getSelectionModel().select(2);
 
-        JFXCheckBox resample = new JFXCheckBox("Resample");
+       resample  = new JFXCheckBox("Resample");
         resample.setSelected(true);
 
         resample.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
@@ -262,7 +281,7 @@ public class FXMLDocumentController implements Initializable {
         h.setPadding(new Insets(0, 0, 0, 240));
 
         //options
-        dialogVbox.getChildren().addAll(destination, dest, del, result, format, bitrate, bitRateType, qua,quality, res,resample, hz, h);
+        dialogVbox.getChildren().addAll(destination, dest, del, result, format, bitrate, bitRateType, qua, quality, res, resample, hz, h);
 
         Scene dialogScene = new Scene(dialogVbox, 300, 520);
 
@@ -327,8 +346,8 @@ public class FXMLDocumentController implements Initializable {
             pBars.add(pro);
         });
     }
-    
-    private synchronized void  upd(String s){
+
+    private synchronized void upd(String s) {
         this.s = s;
     }
 
@@ -349,9 +368,9 @@ public class FXMLDocumentController implements Initializable {
                 running = true;
                 futures = new ArrayList<>();
                 exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-               
+
                 for (File a : f.getAllFiles()) {
-                    if(!running){
+                    if (!running) {
                         exec.shutdown();
                         break;
                     }
@@ -386,9 +405,8 @@ public class FXMLDocumentController implements Initializable {
                             }
                         });
                         //
-                      
 
-                    YTDownloader downloader = new YTDownloader(a, outputDir, del.isSelected(),quality.getSelectionModel().getSelectedItem().toString());
+                        YTDownloader downloader = new YTDownloader(a, outputDir, del.isSelected(), quality.getSelectionModel().getSelectedItem().toString());
 
                         downloader.start();
                         Platform.runLater(() -> {
@@ -396,7 +414,7 @@ public class FXMLDocumentController implements Initializable {
                         });
                         try {
                             downloader.join();
-                            
+
                             isvalid = YTDownloader.isValid;
                             Platform.runLater(() -> {
                                 status.setText("YT download Finished");
@@ -422,27 +440,26 @@ public class FXMLDocumentController implements Initializable {
                                     ((JFXProgressBar) n).setProgress(0.4);
                                 }
                             });
-                              //  System.out.println(downloader.getDownloadedFileName());
-                              //  System.out.println(downloader.getOutputDir());
+                           
                             if (downloader.getDownloadedFileName().contains(downloader.getOutputDir())) {
-                                //System.out.println("when not Download: " + downloader.getDownloadedFileName().contains(downloader.getOutputDir()));
-                              //  s = downloader.getOutputDir() +downloader.getDownloadedFileName();
-                              upd(downloader.getOutputDir() +downloader.getDownloadedFileName());
-                               s2.add(s);
-                             
+                               
+                                //  s = downloader.getOutputDir() +downloader.getDownloadedFileName();
+                                upd(downloader.getOutputDir() + downloader.getDownloadedFileName());
+                                s2.add(s);
+
                             } else {
-                            //    System.out.println("when Download: " + downloader.getOutputDir() + downloader.getDownloadedFileName());
-                              //  s = /*downloader.getOutputDir() + */downloader.getDownloadedFileName();
+                               
+                                //  s = /*downloader.getOutputDir() + */downloader.getDownloadedFileName();
                                 upd(downloader.getDownloadedFileName());
-                         s2.add(s);
+                                s2.add(s);
                             }
-                                    
+
                             String brt = bitRateType.getSelectionModel().getSelectedItem().toString();
-                            System.out.println("for song :"+a.getName()+" s= "+s);
+                         
                             Ffmpeg ff = new Ffmpeg(new File(s), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
-                             System.out.println("etapa2");
+                        
                             boolean isBuilding = ff.build();
-                            System.out.println("etapa3");
+                          
                             if (!isBuilding) {
                                 Platform.runLater(() -> {
                                     int l = f.getAllFiles().indexOf(a);
@@ -451,16 +468,16 @@ public class FXMLDocumentController implements Initializable {
                                         ((JFXProgressBar) n).setStyle("-fx-accent: red;");
 
                                         ((JFXProgressBar) n).setProgress(1.0);
-                                        
+
                                     }
                                 });
                                 this.cancel();
                             }
                             ff.execute();
-                            System.out.println("etapa4");
+                           
                             done = true;
 
-                        } else if (/*!downloader.isAlive() &&*/ !isvalid) {
+                        } else if (/*!downloader.isAlive() &&*/!isvalid) {
                             Platform.runLater(() -> {
                                 status.setText("Converting...");
                                 int l = f.getAllFiles().indexOf(a);
@@ -471,7 +488,7 @@ public class FXMLDocumentController implements Initializable {
                                 }
                             });
                             //AAC
-                         
+
                             Ffmpeg ff = new Ffmpeg(a, format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
                             ff.build();
                             ff.execute();
@@ -489,11 +506,7 @@ public class FXMLDocumentController implements Initializable {
 
                                 }
                             });
-                            /*  if (del.isSelected() && isvalid) {
-                                new File(s2.get(0)).delete();
-                                System.out.println(s2.get(0));
-                                s2.remove(0);
-                            }*/
+                          
                         } else {
                             Platform.runLater(() -> {
                                 if (!running) {
@@ -526,12 +539,9 @@ public class FXMLDocumentController implements Initializable {
                     }
                 });
                 exec.shutdown();
-                for (String g : s2) {
-                    File h = new File(g);
-                    if (h.exists()) {
-                        h.delete();
-                    }
-                }
+                s2.stream().map((g) -> new File(g)).filter((h) -> (h.exists())).forEachOrdered((h) -> {
+                    h.delete();
+                });
 
                 header.setDisable(false);
                 cancel.setVisible(false);
@@ -552,7 +562,7 @@ public class FXMLDocumentController implements Initializable {
 
         exec.shutdownNow();
         task.cancel(true);
-       // th.interrupt();
+        // th.interrupt();
         status.setText("Cancel in progrress(please wait for current Thread to finish)");
         header.setDisable(false);
         cancel.setVisible(false);

@@ -20,7 +20,6 @@ import net.bramp.ffmpeg.FFmpegUtils;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.job.FFmpegJob;
-import net.bramp.ffmpeg.options.AudioEncodingOptions;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
 import net.bramp.ffmpeg.progress.Progress;
 import net.bramp.ffmpeg.progress.ProgressListener;
@@ -67,8 +66,8 @@ public final class Ffmpeg {
         }
 
         try {
-            this.ffmpeg = new FFmpeg("//usr//bin//ffmpeg");
-            this.ffprobe = new FFprobe("//usr//bin//ffprobe");
+            this.ffmpeg = new FFmpeg("/usr/bin/ffmpeg");
+            this.ffprobe = new FFprobe("/usr/bin/ffprobe");
 
         } catch (IOException e) {
             System.out.println("ERRR:");
@@ -99,28 +98,37 @@ public final class Ffmpeg {
             return false;
 
         }
+       
         if (modeType.contains("VBR")) {
+              if(!new File(outputDir).exists())
+                new File(outputDir).mkdir();
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
                     .addOutput(outputDir + filename + ".aac")
                     .setAudioChannels(2)
+                   // .setAudioQuality(1)
+                  
                     .setAudioCodec(outputFormat.toLowerCase())
-                    .addExtraArgs("-q:a", "2")
-                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
-                    .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
+                    .addExtraArgs("-q:a", "2")//orig 2
+                    //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                    //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
         } else {
-
+            
+            if(!new File(outputDir).exists())
+                new File(outputDir).mkdir();
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
                     .addOutput(outputDir + filename + ".aac")
                     .setAudioChannels(2)
+                  
+                 //   .setAudioQuality(1)
                     .setAudioCodec(outputFormat.toLowerCase())
-                    .setAudioBitRate(bitRate)
-                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
-                    .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
+                   .setAudioBitRate(bitRate)
+                   //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                   // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
 
         }
