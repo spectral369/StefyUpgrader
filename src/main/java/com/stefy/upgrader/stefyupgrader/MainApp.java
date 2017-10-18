@@ -22,7 +22,7 @@ public class MainApp extends Application {
         scene.getStylesheets().add("/styles/mainView.css");
 
         stage.setTitle("StefyMusicUpgrader");
-        
+
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/icon/icon.png")));
         stage.setResizable(false);
         stage.setScene(scene);

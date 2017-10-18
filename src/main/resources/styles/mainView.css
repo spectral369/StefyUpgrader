@@ -12,5 +12,5 @@ and open the template in the editor.
 }
 
 #label1{
- -fx-text-fill: red;
+    -fx-text-fill: red;
 }

@@ -12,6 +12,7 @@ package com.stefy.upgrader.folder;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public final class Folder {
@@ -22,6 +23,7 @@ public final class Folder {
     List<File> files = new ArrayList<>();
 
     public List<File> getAllFiles() {
+        Collections.sort(files);
         return files;
     }
 
@@ -30,6 +32,7 @@ public final class Folder {
     public void setAddFiles() {
 
         files.addAll(Arrays.asList(findFiles(getPath())));
+
     }
 
     public Folder(String path) {
@@ -39,9 +42,9 @@ public final class Folder {
         }
 
     }
-    
-    public void setPath(String path){
-        this.pathToClips=path;
+
+    public void setPath(String path) {
+        this.pathToClips = path;
     }
 
     public Folder() {

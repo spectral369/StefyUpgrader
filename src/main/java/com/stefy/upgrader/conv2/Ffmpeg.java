@@ -13,6 +13,9 @@ import com.stefy.upgrader.utils.StefyFormats;
 import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
@@ -32,7 +35,7 @@ public final class Ffmpeg {
     FFmpegBuilder builder = null;
     FFmpegExecutor executor = null;
 
-    File file = null;
+    final File file;
     String outputFormat = null;
     String outputDir = null;
     long bitRate = 192000L;
@@ -40,7 +43,7 @@ public final class Ffmpeg {
     int sample_rate = 48_0000;//default
     String modeType = null;
 
-    public Ffmpeg() {
+    /* public  Ffmpeg() {
 
         boolean is = StefyUtils.checkFFPEG_Avconv();
         if (!is) {
@@ -56,8 +59,7 @@ public final class Ffmpeg {
             System.out.println("ERRR:");
             e.printStackTrace(System.out);
         }
-    }
-
+    }*/
     public Ffmpeg(File file, String outputFormat, String outputDir, int bitRate, String type) {
         boolean is = StefyUtils.checkFFPEG_Avconv();
         if (!is) {
@@ -86,52 +88,60 @@ public final class Ffmpeg {
             System.out.println("Wrong format");
             System.exit(1);
         }
+        build();
+        execute();
 
     }
 
     public boolean build() {
         String filename = file.getName().substring(0, file.getName().lastIndexOf("."));
 
+        File o = Paths.get(file.getPath()).toFile();
         try {
-            in = ffprobe.probe(file.getPath());
+            in = ffprobe.probe(o.getPath());
         } catch (IOException e) {
+            Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
+            System.out.println("Twst2-> " + o.getPath());
             return false;
-
         }
-       
+
         if (modeType.contains("VBR")) {
-              if(!new File(outputDir).exists())
+            if (!new File(outputDir).exists()) {
                 new File(outputDir).mkdir();
+            }
+
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
                     .addOutput(outputDir + filename + ".aac")
                     .setAudioChannels(2)
-                   // .setAudioQuality(1)
-                  
+                    // .setAudioQuality(1)
+
                     .setAudioCodec(outputFormat.toLowerCase())
                     .addExtraArgs("-q:a", "2")//orig 2
                     //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
         } else {
-            
-            if(!new File(outputDir).exists())
+
+            if (!new File(outputDir).exists()) {
                 new File(outputDir).mkdir();
+            }
+
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
                     .addOutput(outputDir + filename + ".aac")
                     .setAudioChannels(2)
-                  
-                 //   .setAudioQuality(1)
+                    //   .setAudioQuality(1)
                     .setAudioCodec(outputFormat.toLowerCase())
-                   .setAudioBitRate(bitRate)
-                   //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
-                   // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
+                    .setAudioBitRate(bitRate)
+                    //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                    // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
 
         }
+        // builder.setVerbosity(FFmpegBuilder.Verbosity.VERBOSE);
         return true;
 
     }
@@ -162,6 +172,7 @@ public final class Ffmpeg {
     }
 
     public void deleteFile() {
+
         this.file.delete();
     }
 

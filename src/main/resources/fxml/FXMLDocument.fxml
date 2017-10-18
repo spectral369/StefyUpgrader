@@ -7,48 +7,48 @@
 <?import javafx.scene.layout.*?>
 
 <AnchorPane id="AnchorPane" prefHeight="557.0" prefWidth="620.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.stefy.upgrader.stefyupgrader.FXMLDocumentController">
-   <children>
-      <Pane fx:id="root" prefHeight="557.0" prefWidth="620.0">
-         <children>
-            <Pane fx:id="header" layoutX="7.0" prefHeight="78.0" prefWidth="584.0">
-               <children>
-                  <Button layoutY="2.0" mnemonicParsing="false" onAction="#handleConv" prefHeight="78.0" prefWidth="99.0" text="Convert" fx:id="convert" />
-                  <Button layoutX="105.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFiles" prefHeight="78.0" prefWidth="99.0" text="Add File" fx:id="addFile" />
-                  <Button layoutX="204.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFolder" prefHeight="78.0" prefWidth="99.0" text="Add Folder" fx:id="addFolder" />
-                  <Button layoutX="303.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleClear" prefHeight="78.0" prefWidth="99.0" text="Clear" fx:id="clear" />
-                  <Button layoutX="496.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleOp" prefHeight="78.0" prefWidth="99.0" text="Options" />
-               </children>
-            </Pane>
-            <ScrollPane layoutX="2.0" layoutY="93.0" prefHeight="416.0" prefWidth="613.0">
-               <content>
-                  <BorderPane prefHeight="413.0" prefWidth="608.0">
-                     <top>
-                        <HBox id="top" fx:id="top" prefHeight="32.0" prefWidth="608.0" BorderPane.alignment="CENTER" />
-                     </top>
-                     <left>
-                         <VBox id="progr" fx:id="progr" prefHeight="381.0" prefWidth="67.0" BorderPane.alignment="CENTER">
-                             <children>
+    <children>
+        <Pane fx:id="root" prefHeight="557.0" prefWidth="620.0">
+            <children>
+                <Pane fx:id="header" layoutX="7.0" prefHeight="78.0" prefWidth="584.0">
+                    <children>
+                        <Button layoutY="2.0" mnemonicParsing="false" onAction="#handleConv" prefHeight="78.0" prefWidth="99.0" text="Convert" fx:id="convert" />
+                        <Button layoutX="105.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFiles" prefHeight="78.0" prefWidth="99.0" text="Add File" fx:id="addFile" />
+                        <Button layoutX="204.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFolder" prefHeight="78.0" prefWidth="99.0" text="Add Folder" fx:id="addFolder" />
+                        <Button layoutX="303.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleClear" prefHeight="78.0" prefWidth="99.0" text="Clear" fx:id="clear" />
+                        <Button layoutX="496.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleOp" prefHeight="78.0" prefWidth="99.0" text="Options" />
+                    </children>
+                </Pane>
+                <ScrollPane layoutX="2.0" layoutY="93.0" prefHeight="416.0" prefWidth="613.0">
+                    <content>
+                        <BorderPane prefHeight="413.0" prefWidth="608.0">
+                            <top>
+                                <HBox id="top" fx:id="top" prefHeight="32.0" prefWidth="608.0" BorderPane.alignment="CENTER" />
+                            </top>
+                            <left>
+                                <VBox id="progr" fx:id="progr" prefHeight="381.0" prefWidth="67.0" BorderPane.alignment="CENTER">
+                                    <children>
                                  
-                             </children>
-                         </VBox>
-                     </left>
-                     <center>
-                         <VBox id="song" fx:id="song" prefHeight="381.0" prefWidth="175.0" BorderPane.alignment="CENTER">
-                             <children>
+                                    </children>
+                                </VBox>
+                            </left>
+                            <center>
+                                <VBox id="song" fx:id="song" prefHeight="381.0" prefWidth="175.0" BorderPane.alignment="CENTER">
+                                    <children>
                                  
-                             </children>
-                         </VBox>
-                     </center>
-                     <right>
-                        <VBox id="extra" fx:id="extra" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
-                     </right>
-                  </BorderPane>
-               </content> 
-            </ScrollPane>
-            <Label fx:id="status" layoutX="14.0" layoutY="517.0" prefHeight="26.0" prefWidth="225.0" text="Ready" />
-            <Button layoutX="553.0" layoutY="518.0" mnemonicParsing="false" text="Cancel" onAction="#handleCancel" fx:id="cancel" />
-         <!--   <Button layoutX="491.0" layoutY="518.0" mnemonicParsing="false" text="Pause" onAction="#handlePause" fx:id="pause" />-->
-         </children>
-      </Pane>
-   </children>
+                                    </children>
+                                </VBox>
+                            </center>
+                            <right>
+                                <VBox id="extra" fx:id="extra" prefHeight="200.0" prefWidth="100.0" BorderPane.alignment="CENTER" />
+                            </right>
+                        </BorderPane>
+                    </content> 
+                </ScrollPane>
+                <Label fx:id="status" layoutX="14.0" layoutY="517.0" prefHeight="26.0" prefWidth="225.0" text="Ready" />
+                <Button layoutX="553.0" layoutY="518.0" mnemonicParsing="false" text="Cancel" onAction="#handleCancel" fx:id="cancel" />
+                <!--   <Button layoutX="491.0" layoutY="518.0" mnemonicParsing="false" text="Pause" onAction="#handlePause" fx:id="pause" />-->
+            </children>
+        </Pane>
+    </children>
 </AnchorPane>
