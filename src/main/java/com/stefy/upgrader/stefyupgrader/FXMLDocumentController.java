@@ -89,7 +89,7 @@ public class FXMLDocumentController implements Initializable {
     JFXCheckBox resample = null;
     private ExecutorService exec = null;
     private Task task = null;
-
+    private Thread clean = null;
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
@@ -144,7 +144,8 @@ public class FXMLDocumentController implements Initializable {
         chooserFile.setInitialDirectory(new File(System.getProperty("user.home")));
         chooserFile.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MP3", "*.mp3"),
-                new FileChooser.ExtensionFilter("M4A", "*.m4a")
+                new FileChooser.ExtensionFilter("M4A", "*.m4a"),
+                new FileChooser.ExtensionFilter("MP4", "*.mp4")
         );
 
         List<File> list = chooserFile.showOpenMultipleDialog(song.getScene().getWindow());
@@ -403,16 +404,17 @@ public class FXMLDocumentController implements Initializable {
                             }
 
                         });
-
-                        if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
+ if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
                             isDone.set(true);
                         }
+                       
                         return "success";
                     }));
 
                 }
                 Platform.runLater(() -> {
                     status.setText("Almost Done...");
+                    exec.shutdown();
                 });
                 //   
                 return null;
@@ -421,7 +423,7 @@ public class FXMLDocumentController implements Initializable {
         };
 
         task.run();
-        new Thread(() -> {
+      clean =  new Thread(() -> {
             while (!isDone.get()) {
                 try {
                     Thread.sleep(1000);
@@ -442,7 +444,8 @@ public class FXMLDocumentController implements Initializable {
             Platform.runLater(() -> {
                 status.setText("Done !");
             });
-        }).start();
+        });
+      clean.start();
         }
 
     }
@@ -453,7 +456,7 @@ public class FXMLDocumentController implements Initializable {
         exec.shutdownNow();
 
         task.cancel(true);
-        
+        clean.interrupt();
         status.setText("Cancelled");
         header.setDisable(false);
         cancel.setVisible(false);

@@ -84,13 +84,12 @@ public final class YTDownloader {
             String line = "";
 
             while ((line = reader.readLine()) != null) {
-              
                 if (line.contains("m4a")) {
-                    audioOnlyCodeStr = line; //System.out.println("line:"+line);
+                    audioOnlyCodeStr = line.trim(); 
                 }
                 if (line.contains("best")) {
 
-                    audioBestStr = line;
+                    audioBestStr = line.trim();
                 }
             }
             int st = audioOnlyCodeStr.indexOf("m4a");
@@ -98,7 +97,7 @@ public final class YTDownloader {
             String code = audioOnlyCodeStr.substring(0, st).trim();
             audioOnlyCode = Integer.parseInt(code);
             String codeBest = audioBestStr.substring(0, 3).trim();
-            System.out.println("Code:"+codeBest);
+            
 
             audioBestCode = Integer.parseInt(codeBest);
 
@@ -108,7 +107,7 @@ public final class YTDownloader {
             isValid = false;
         }
         proc.destroy();
-        return -1;
+        return 0;
 
     }
 
