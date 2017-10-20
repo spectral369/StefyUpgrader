@@ -12,6 +12,9 @@ package com.stefy.upgrader.utils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 public class StefyUtils {
 
@@ -52,5 +55,19 @@ public class StefyUtils {
 
         return isYT;
     }
+    public static boolean isNetAvailable1() {
+	    try {
+	
+	        final URL url = new URL("http://www.google.com");
+	        final URLConnection conn = url.openConnection();
+	        conn.setConnectTimeout(8000);
+	        conn.connect();
+	        return true;
+	    } catch (MalformedURLException e) {
+	        throw new RuntimeException(e);
+	    } catch (IOException e) {
+	        return false;
+	    }
+	}
 
 }

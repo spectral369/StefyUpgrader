@@ -12,6 +12,7 @@ import com.jfoenix.controls.JFXProgressBar;
 import com.stefy.upgrader.conv2.Ffmpeg;
 import com.stefy.upgrader.downloader.YTDownloader;
 import com.stefy.upgrader.folder.Folder;
+import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class FXMLDocumentController implements Initializable {
     private final DirectoryChooser chooserDir = new DirectoryChooser();
     private final FileChooser chooserFile = new FileChooser();
     private String outputDir = System.getProperty("user.home") + "/converted/";
- List<Future<String>> futures = new ArrayList<>();
+    List<Future<String>> futures = new ArrayList<>();
     JFXComboBox hz = null;
     JFXCheckBox del = null;
     JFXComboBox format = null;
@@ -356,13 +357,17 @@ public class FXMLDocumentController implements Initializable {
         } else if (f.getAllFiles().isEmpty()) {
             return;
         }
-
+        
+        if(!StefyUtils.isNetAvailable1()){
+          status.setText("Please check your internet connection !");
+          status.setStyle("-fx-accent: red;");
+        }
+        else{
         header.setDisable(true);
         cancel.setVisible(true);
 
-       
-
         exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+       
         task = new Task<Void>() {
             @Override
             protected Void call() throws Exception {
@@ -429,7 +434,7 @@ public class FXMLDocumentController implements Initializable {
                 for (String j : s2) {
                     new File(j).delete();
                 }
-                
+
                 header.setDisable(false);
                 cancel.setVisible(false);
             }
@@ -438,17 +443,17 @@ public class FXMLDocumentController implements Initializable {
                 status.setText("Done !");
             });
         }).start();
-      
-      
-      
-      
+        }
+
     }
 
     @FXML
     protected void handleCancel() {
 
         exec.shutdownNow();
-        task.cancel();
+
+        task.cancel(true);
+        
         status.setText("Cancelled");
         header.setDisable(false);
         cancel.setVisible(false);

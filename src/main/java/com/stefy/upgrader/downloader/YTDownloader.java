@@ -84,13 +84,13 @@ public final class YTDownloader {
             String line = "";
 
             while ((line = reader.readLine()) != null) {
+              
                 if (line.contains("m4a")) {
-                    audioOnlyCodeStr = line;
+                    audioOnlyCodeStr = line; //System.out.println("line:"+line);
                 }
                 if (line.contains("best")) {
 
-                    audioBestStr = line.trim();
-
+                    audioBestStr = line;
                 }
             }
             int st = audioOnlyCodeStr.indexOf("m4a");
@@ -98,6 +98,7 @@ public final class YTDownloader {
             String code = audioOnlyCodeStr.substring(0, st).trim();
             audioOnlyCode = Integer.parseInt(code);
             String codeBest = audioBestStr.substring(0, 3).trim();
+            System.out.println("Code:"+codeBest);
 
             audioBestCode = Integer.parseInt(codeBest);
 
@@ -107,7 +108,7 @@ public final class YTDownloader {
             isValid = false;
         }
         proc.destroy();
-        return 0;
+        return -1;
 
     }
 
@@ -206,18 +207,19 @@ public final class YTDownloader {
         link = makeYTLink(a);
 
         try {
-
             int ytFormatCodes = getYTFormatCodes(link);
+               } catch (Exception e) {
+                   isValid=false;
+            System.out.println("ERROR: Most likely the video is not available anymore !");
+             downloadedFileName = f.getPath();
+        }
 
             if (quality.equals("Standard")) {
                 downloadYT(link, audioOnlyCode);
             } else if (quality.equals("High")) {
                 downloadYT(link, audioBestCode);
             }
-        } catch (Exception e) {
-            System.out.println("err smg: " + e.getMessage());
-            return null;
-        }
+   
 
         if (isSel) {
             FXMLDocumentController.s2.add(downloadedFileName);
