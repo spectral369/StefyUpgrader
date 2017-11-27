@@ -80,16 +80,20 @@ public class FXMLDocumentController implements Initializable {
     private final FileChooser chooserFile = new FileChooser();
     private String outputDir = System.getProperty("user.home") + "/converted/";
     List<Future<String>> futures = new ArrayList<>();
-    JFXComboBox hz = null;
-    JFXCheckBox del = null;
-    JFXComboBox format = null;
-    JFXComboBox bitRateType = null;
-    JFXComboBox quality = null;
+    JFXComboBox hz = new JFXComboBox();
+    JFXCheckBox del = new JFXCheckBox("Delete");
+    TextField dest = new TextField(outputDir);
+
+    JFXComboBox format = new JFXComboBox();
+    JFXComboBox bitRateType = new JFXComboBox();
+    JFXComboBox quality = new JFXComboBox();
     public static List<String> s2 = new ArrayList<>();
-    JFXCheckBox resample = null;
+    JFXCheckBox resample = new JFXCheckBox("Resample");
+
     private ExecutorService exec = null;
     private Task task = null;
     private Thread clean = null;
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 
@@ -99,6 +103,23 @@ public class FXMLDocumentController implements Initializable {
         addFile.setDisable(true);
         addFolder.setDisable(true);
         clear.setDisable(true);
+        del.setSelected(setDelSelected);
+        dest.setEditable(false);
+        bitRateType.getItems().add("CONSTANT(CBR)(best option ATM)");
+        //      bitRateType.getItems().add("AVERAGE(AVR)(not available for AAC)");
+        bitRateType.getItems().add("VARIABLE(VBR)(not Documented)");
+        bitRateType.getSelectionModel().selectFirst();
+        quality.getItems().add("Standard");
+        quality.getItems().add("High");
+        quality.getSelectionModel().selectLast();
+
+        hz.getItems().add("12000hz");
+        hz.getItems().add("19200hz");
+        hz.getItems().add("32000hz");
+        hz.getItems().add("48000hz");
+
+        hz.getSelectionModel().select(2);
+        resample.setSelected(true);
 
     }
 
@@ -145,7 +166,9 @@ public class FXMLDocumentController implements Initializable {
         chooserFile.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("MP3", "*.mp3"),
                 new FileChooser.ExtensionFilter("M4A", "*.m4a"),
-                new FileChooser.ExtensionFilter("MP4", "*.mp4")
+                new FileChooser.ExtensionFilter("MP4", "*.mp4"),
+                new FileChooser.ExtensionFilter("WEBM", "*.webm")
+                
         );
 
         List<File> list = chooserFile.showOpenMultipleDialog(song.getScene().getWindow());
@@ -190,8 +213,6 @@ public class FXMLDocumentController implements Initializable {
 
         //options
         Label destination = new Label("Destination: ");
-        TextField dest = new TextField(outputDir);
-        dest.setEditable(false);
 
         dest.setOnMouseClicked((MouseEvent e) -> {
             DirectoryChooser fc = new DirectoryChooser();
@@ -210,23 +231,18 @@ public class FXMLDocumentController implements Initializable {
             }
 
         });
-        del = new JFXCheckBox("Delete");
+
         del.setTooltip(new Tooltip("delete files after converting?"));
-        del.setSelected(setDelSelected);
 
         del.setOnMouseClicked(e -> {
             setDelSelected = !setDelSelected;
         });
 
         Label result = new Label("Result");
-        format = new JFXComboBox();
+
         format.getItems().add("AAC");
         format.getSelectionModel().selectFirst();
         Label bitrate = new Label("Bit Rate");
-        bitRateType = new JFXComboBox();
-        bitRateType.getItems().add("CONSTANT(CBR)(best option ATM)");
-        //      bitRateType.getItems().add("AVERAGE(AVR)(not available for AAC)");
-        bitRateType.getItems().add("VARIABLE(VBR)(not Documented)");
 
         Label res = new Label("Resample?");
         bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
@@ -244,25 +260,9 @@ public class FXMLDocumentController implements Initializable {
                 }
             }
         });
-        bitRateType.getSelectionModel().selectFirst();
+       
 
         Label qua = new Label("Download Quality");
-        quality = new JFXComboBox();
-        quality.getItems().add("Standard");
-        quality.getItems().add("High");
-        quality.getSelectionModel().selectFirst();
-
-        hz = new JFXComboBox();
-
-        hz.getItems().add("12000hz");
-        hz.getItems().add("19200hz");
-        hz.getItems().add("32000hz");
-        hz.getItems().add("48000hz");
-
-        hz.getSelectionModel().select(2);
-
-        resample = new JFXCheckBox("Resample");
-        resample.setSelected(true);
 
         resample.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (resample.isSelected()) {
@@ -358,94 +358,93 @@ public class FXMLDocumentController implements Initializable {
         } else if (f.getAllFiles().isEmpty()) {
             return;
         }
-        
-        if(!StefyUtils.isNetAvailable1()){
-          status.setText("Please check your internet connection !");
-          status.setStyle("-fx-accent: red;");
-        }
-        else{
-        header.setDisable(true);
-        cancel.setVisible(true);
 
-        exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
-       
-        task = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                for (File a : f.getAllFiles()) {
-                    futures.add(exec.submit(() -> {
+        if (!StefyUtils.isNetAvailable1()) {
+            status.setText("Please check your internet connection !");
+            status.setStyle("-fx-accent: red;");
+        } else {
+            header.setDisable(true);
+            cancel.setVisible(true);
 
-                        Platform.runLater(() -> {
-                            status.setText("Working....");
-                            int l = f.getAllFiles().indexOf(a);
-                            Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                            if (n instanceof JFXProgressBar) {
+            exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-                                ((JFXProgressBar) n).setProgress(0.3);
+            task = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    for (File a : f.getAllFiles()) {
+                        futures.add(exec.submit(() -> {
+
+                            Platform.runLater(() -> {
+                                status.setText("Working....");
+                                int l = f.getAllFiles().indexOf(a);
+                                Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                if (n instanceof JFXProgressBar) {
+
+                                    ((JFXProgressBar) n).setProgress(0.3);
+                                }
+                            });
+                            final YTDownloader downloader = new YTDownloader(a, outputDir, del.isSelected(), quality.getSelectionModel().getSelectedItem().toString());
+                            Platform.runLater(() -> {
+                                int l = f.getAllFiles().indexOf(a);
+                                Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                if (n instanceof JFXProgressBar) {
+
+                                    ((JFXProgressBar) n).setProgress(0.4);
+                                }
+
+                            });
+                            final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
+                            Platform.runLater(() -> {
+                                int l = f.getAllFiles().indexOf(a);
+                                Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                if (n instanceof JFXProgressBar) {
+
+                                    ((JFXProgressBar) n).setProgress(1.0);
+                                }
+
+                            });
+                            if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
+                                isDone.set(true);
                             }
-                        });
-                        final YTDownloader downloader = new YTDownloader(a, outputDir, del.isSelected(), quality.getSelectionModel().getSelectedItem().toString());
-                        Platform.runLater(() -> {
-                            int l = f.getAllFiles().indexOf(a);
-                            Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                            if (n instanceof JFXProgressBar) {
 
-                                ((JFXProgressBar) n).setProgress(0.4);
-                            }
+                            return "success";
+                        }));
 
-                        });
-                        final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
-                        Platform.runLater(() -> {
-                            int l = f.getAllFiles().indexOf(a);
-                            Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                            if (n instanceof JFXProgressBar) {
-
-                                ((JFXProgressBar) n).setProgress(1.0);
-                            }
-
-                        });
- if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
-                            isDone.set(true);
-                        }
-                       
-                        return "success";
-                    }));
-
+                    }
+                    Platform.runLater(() -> {
+                        status.setText("Almost Done...");
+                        exec.shutdown();
+                    });
+                    //   
+                    return null;
                 }
-                Platform.runLater(() -> {
-                    status.setText("Almost Done...");
+
+            };
+
+            task.run();
+            clean = new Thread(() -> {
+                while (!isDone.get()) {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (isDone.get()) {
                     exec.shutdown();
+                    for (String j : s2) {
+                        new File(j).delete();
+                    }
+
+                    header.setDisable(false);
+                    cancel.setVisible(false);
+                }
+                task.cancel();
+                Platform.runLater(() -> {
+                    status.setText("Done !");
                 });
-                //   
-                return null;
-            }
-
-        };
-
-        task.run();
-      clean =  new Thread(() -> {
-            while (!isDone.get()) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            if (isDone.get()) {
-                exec.shutdown();
-                for (String j : s2) {
-                    new File(j).delete();
-                }
-
-                header.setDisable(false);
-                cancel.setVisible(false);
-            }
-            task.cancel();
-            Platform.runLater(() -> {
-                status.setText("Done !");
             });
-        });
-      clean.start();
+            clean.start();
         }
 
     }
