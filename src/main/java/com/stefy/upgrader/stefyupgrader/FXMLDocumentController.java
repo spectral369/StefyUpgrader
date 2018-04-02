@@ -18,6 +18,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import javafx.beans.value.ObservableValue;
@@ -93,6 +94,9 @@ public class FXMLDocumentController implements Initializable {
     private ExecutorService exec = null;
     private Task task = null;
     private Thread clean = null;
+    private boolean isCancelled = false;
+    
+  public CountDownLatch latch = null; 
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -120,8 +124,11 @@ public class FXMLDocumentController implements Initializable {
 
         hz.getSelectionModel().select(2);
         resample.setSelected(true);
-
+           latch =  new CountDownLatch(1);
+           exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
+    
+    
 
     @FXML
     protected void handleClear() {
@@ -358,7 +365,7 @@ public class FXMLDocumentController implements Initializable {
         } else if (f.getAllFiles().isEmpty()) {
             return;
         }
-
+        isCancelled=false;
         if (!StefyUtils.isNetAvailable1()) {
             status.setText("Please check your internet connection !");
             status.setStyle("-fx-accent: red;");
@@ -366,7 +373,7 @@ public class FXMLDocumentController implements Initializable {
             header.setDisable(true);
             cancel.setVisible(true);
 
-            exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+         //   exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
             task = new Task<Void>() {
                 @Override
@@ -388,23 +395,35 @@ public class FXMLDocumentController implements Initializable {
                                 int l = f.getAllFiles().indexOf(a);
                                 Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
                                 if (n instanceof JFXProgressBar) {
-
+                                     if(isCancelled){
+                                         status.setStyle("-fx-accent: red;");
+                                    }else{
+                                          status.setStyle("-fx-accent: green;");
+                                     }
                                     ((JFXProgressBar) n).setProgress(0.4);
+                                   
                                 }
 
                             });
+                           if(!task.isDone() && downloader.isValid);
                             final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
                             Platform.runLater(() -> {
                                 int l = f.getAllFiles().indexOf(a);
                                 Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
                                 if (n instanceof JFXProgressBar) {
-
+                                    if(isCancelled){
+                                         status.setStyle("-fx-accent: red;");
+                                    }else{
+                                          status.setStyle("-fx-accent: green;");
+                                     }
                                     ((JFXProgressBar) n).setProgress(1.0);
                                 }
 
                             });
                             if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
                                 isDone.set(true);
+                                latch.countDown();
+                                System.out.println("final song...");
                             }
 
                             return "success";
@@ -423,26 +442,29 @@ public class FXMLDocumentController implements Initializable {
 
             task.run();
             clean = new Thread(() -> {
-                while (!isDone.get()) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
+                try {
+                   
+                    latch.await();
+                    if (isDone.get()) {
+                        
+                         //futures.get(f.getAllFiles().size());
+                        task.cancel(true);
+                        exec.shutdown();
+                        header.setDisable(false);
+                        cancel.setVisible(false);
                     }
+                    task.cancel();
+                   
+                    Platform.runLater(() -> {
+                         if(isCancelled){
+                                         status.setStyle("-fx-accent: red;");
+                                          status.setText("Cancelled");
+                                    }else
+                        status.setText("Done !");
+                    });
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                if (isDone.get()) {
-                    exec.shutdown();
-                    for (String j : s2) {
-                        new File(j).delete();
-                    }
-
-                    header.setDisable(false);
-                    cancel.setVisible(false);
-                }
-                task.cancel();
-                Platform.runLater(() -> {
-                    status.setText("Done !");
-                });
             });
             clean.start();
         }
@@ -451,11 +473,20 @@ public class FXMLDocumentController implements Initializable {
 
     @FXML
     protected void handleCancel() {
+        
+        isCancelled=true;
+        task.cancel(true);
 
         exec.shutdownNow();
 
-        task.cancel(true);
-        clean.interrupt();
+       if(clean.isAlive()){
+        latch.countDown();
+        }
+       if(s2.size()>0)
+           for(String s:s2){
+               System.out.println("delete "+s);
+              new File(s).delete();
+           }
         status.setText("Cancelled");
         header.setDisable(false);
         cancel.setVisible(false);
@@ -476,22 +507,6 @@ public class FXMLDocumentController implements Initializable {
         }
         return 192;
     }
-    /*
-    private synchronized void wai() {
-        int last = 700;
-        for (int i = 0; i < 5; i++) {
-            int Random = (int) (Math.random() * (600 + 1)) + 200;
-
-            if (Random > last + 100 || Random < last - 100) {
-
-                last = Random;
-            }
-        }
-        try {
-            Thread.currentThread().sleep(last);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }*/
+   
 
 }

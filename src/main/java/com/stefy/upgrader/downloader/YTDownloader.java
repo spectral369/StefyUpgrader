@@ -128,7 +128,7 @@ public final class YTDownloader {
                 if (line.contains("Destination:")) {
 
                     downloadedFileName = line.substring(line.indexOf(":") + 1, line.length()).trim();
-
+                     
                     while (proc.isAlive()) {
 
                         System.out.print(".");
@@ -147,7 +147,7 @@ public final class YTDownloader {
                     proc.destroy();//test
                     return true;
                 } else if (line.contains("already")) {
-
+                    System.out.println("already Downloaded");
                     line = line.substring(line.indexOf("]") + 1, line.indexOf("has") - 1).trim();
 
                     if (isSel) {

@@ -9,6 +9,7 @@ package com.stefy.upgrader.conv2;
  *
  * @author spectral369
  */
+import com.stefy.upgrader.stefyupgrader.FXMLDocumentController;
 import com.stefy.upgrader.utils.StefyFormats;
 import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
@@ -68,8 +69,8 @@ public final class Ffmpeg {
         }
 
         try {
-            this.ffmpeg = new FFmpeg("/usr/bin/ffmpeg");
-            this.ffprobe = new FFprobe("/usr/bin/ffprobe");
+            this.ffmpeg = new FFmpeg("/usr/local/bin/ffmpeg");
+            this.ffprobe = new FFprobe("/usr/local/bin/ffprobe");
 
         } catch (IOException e) {
             System.out.println("ERRR:");
@@ -88,8 +89,10 @@ public final class Ffmpeg {
             System.out.println("Wrong format");
             System.exit(1);
         }
-        build();
+     if(build())
         execute();
+    //check needed
+        
 
     }
 
@@ -100,7 +103,7 @@ public final class Ffmpeg {
         try {
             in = ffprobe.probe(o.getPath());
         } catch (IOException e) {
-            Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
+          //  Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
             System.out.println("Twst2-> " + o.getPath());
             return false;
         }
@@ -117,9 +120,12 @@ public final class Ffmpeg {
                     .setAudioChannels(2)
                     // .setAudioQuality(1)
 
-                    .setAudioCodec(outputFormat.toLowerCase())
-                    .addExtraArgs("-q:a", "2")//orig 2
-                    //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                   // .setAudioCodec(outputFormat.toLowerCase())
+                   // .setAudioCodec("libfdk_aac")
+                    .addExtraArgs("-c:a","libfdk_aac")
+                    //.addExtraArgs("-q:a", "3")//orig 2
+                    .addExtraArgs("-vbr","3")
+                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
         } else {
@@ -134,9 +140,10 @@ public final class Ffmpeg {
                     .addOutput(outputDir + filename + ".aac")
                     .setAudioChannels(2)
                     //   .setAudioQuality(1)
-                    .setAudioCodec(outputFormat.toLowerCase())
+                    .setAudioCodec("libfdk_aac")
                     .setAudioBitRate(bitRate)
-                    //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                    .addExtraArgs("-profile:a","aac_he_v2")
+                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
 
@@ -168,6 +175,9 @@ public final class Ffmpeg {
         executor = new FFmpegExecutor(ffmpeg, ffprobe);
         FFmpegJob job = executor.createJob(builder, prog);
         job.run();
+        int index =  FXMLDocumentController.s2.indexOf(file.getPath());
+        System.out.println("ff delete file: "+file.getPath()+ " "+index+" "+FXMLDocumentController.s2.get(index));
+        new File(FXMLDocumentController.s2.remove(index)).delete(); 
 
     }
 
