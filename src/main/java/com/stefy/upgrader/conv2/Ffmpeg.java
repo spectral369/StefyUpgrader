@@ -15,8 +15,7 @@ import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
@@ -153,21 +152,22 @@ public final class Ffmpeg {
 
     }
     public ProgressListener prog = new ProgressListener() {
+          final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
         @Override
         public void progress(Progress progress) {
-            final double duration_us = in.getFormat().duration * 1000000.0;
 
-            double percentage = progress.out_time_ms / duration_us;
-
-            // Print out interesting information about the progress
-            System.out.println(String.format(
-                    "[%.0f%%] status:%s  time:%s ms  speed:%.2fx thread:%s",
-                    percentage * 100,
-                    progress.progress,
-                    FFmpegUtils.millisecondsToString(progress.out_time_ms),
-                    progress.speed,
-                    Thread.currentThread().getName()
-            ));
+           double percentage = progress.out_time_ns / duration_ns;
+            
+       System.out.println(String.format(
+			"[%.0f%%] status:%s time:%s ms speed:%.2fx thread:%s",
+			percentage * 100,
+			progress.status,
+			FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
+			progress.speed,
+                        Thread.currentThread().getName()
+		));
+       
+       
         }
     };
 
