@@ -35,7 +35,7 @@ public final class YTDownloader {
     public YTDownloader() {
 
         if (!StefyUtils.checkYoutube_dl()) {
-            System.out.println("Youtube-dl is missing, please isntall: sudo apt install youtube-dl");
+            System.out.println("Youtube-dl is missing, please install: sudo apt install youtube-dl");
             System.exit(2);
         }
 
@@ -48,7 +48,7 @@ public final class YTDownloader {
     public YTDownloader(File f, String outputDir, boolean isSelected, String quality) {
 
         if (!StefyUtils.checkYoutube_dl()) {
-            System.out.println("Youtube-dl is missing, please isntall: sudo apt install youtube-dl");
+            System.out.println("Youtube-dl is missing, please install: sudo apt install youtube-dl");
             System.exit(2);
         }
         this.f = f;
@@ -85,7 +85,7 @@ public final class YTDownloader {
 
             while ((line = reader.readLine()) != null) {
                 if (line.contains("m4a")) {
-                    audioOnlyCodeStr = line.trim(); 
+                    audioOnlyCodeStr = line.trim();
                 }
                 if (line.contains("best")) {
 
@@ -97,7 +97,6 @@ public final class YTDownloader {
             String code = audioOnlyCodeStr.substring(0, st).trim();
             audioOnlyCode = Integer.parseInt(code);
             String codeBest = audioBestStr.substring(0, 3).trim();
-            
 
             audioBestCode = Integer.parseInt(codeBest);
 
@@ -119,7 +118,6 @@ public final class YTDownloader {
             String[] command = new String[]{"youtube-dl", "-f", String.valueOf(code), "-o", pa, link.trim()};
 
             proc = new ProcessBuilder(command).start();
-            String name = null;
             BufferedReader reader
                     = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             String line = "";
@@ -128,7 +126,7 @@ public final class YTDownloader {
                 if (line.contains("Destination:")) {
 
                     downloadedFileName = line.substring(line.indexOf(":") + 1, line.length()).trim();
-                     
+
                     while (proc.isAlive()) {
 
                         System.out.print(".");
@@ -151,7 +149,9 @@ public final class YTDownloader {
                     line = line.substring(line.indexOf("]") + 1, line.indexOf("has") - 1).trim();
 
                     if (isSel) {
-                        downloadedFileName = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + name;
+                        //downloadedFileName = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + name;
+                        downloadedFileName = line;
+
                     }
 
                     while (proc.isAlive()) {
@@ -161,7 +161,7 @@ public final class YTDownloader {
 
                     }
                     if (!isSel) {
-                        File k = new File(System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + line);
+                        File k = new File(/*System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +*/line);
                         FileUtils.copyFile(k, new File(outputDir + k.getName()));
                         downloadedFileName = outputDir + k.getName();
                     }
@@ -207,18 +207,17 @@ public final class YTDownloader {
 
         try {
             int ytFormatCodes = getYTFormatCodes(link);
-               } catch (Exception e) {
-                   isValid=false;
+        } catch (Exception e) {
+            isValid = false;
             System.out.println("ERROR: Most likely the video is not available anymore !");
-             downloadedFileName = f.getPath();
+            downloadedFileName = f.getPath();
         }
 
-            if (quality.equals("Standard")) {
-                downloadYT(link, audioOnlyCode);
-            } else if (quality.equals("High")) {
-                downloadYT(link, audioBestCode);
-            }
-   
+        if (quality.equals("Standard")) {
+            downloadYT(link, audioOnlyCode);
+        } else if (quality.equals("High")) {
+            downloadYT(link, audioBestCode);
+        }
 
         if (isSel) {
             FXMLDocumentController.s2.add(downloadedFileName);

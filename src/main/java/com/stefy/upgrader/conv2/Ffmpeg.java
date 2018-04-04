@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.FFmpegExecutor;
@@ -59,6 +61,7 @@ public final class Ffmpeg {
             System.out.println("ERRR:");
             e.printStackTrace(System.out);
         }
+        this.file =null;
     }*/
     public Ffmpeg(File file, String outputFormat, String outputDir, int bitRate, String type) {
         boolean is = StefyUtils.checkFFPEG_Avconv();
@@ -88,22 +91,23 @@ public final class Ffmpeg {
             System.out.println("Wrong format");
             System.exit(1);
         }
-     if(build())
-        execute();
-    //check needed
-        
-
+        if (build()) {
+            execute();
+        }
     }
 
     public boolean build() {
+
         String filename = file.getName().substring(0, file.getName().lastIndexOf("."));
 
         File o = Paths.get(file.getPath()).toFile();
+
         try {
+
             in = ffprobe.probe(o.getPath());
         } catch (IOException e) {
-          //  Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
-            System.out.println("Twst2-> " + o.getPath());
+            Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
+
             return false;
         }
 
@@ -119,11 +123,11 @@ public final class Ffmpeg {
                     .setAudioChannels(2)
                     // .setAudioQuality(1)
 
-                   // .setAudioCodec(outputFormat.toLowerCase())
-                   // .setAudioCodec("libfdk_aac")
-                    .addExtraArgs("-c:a","libfdk_aac")
+                    // .setAudioCodec(outputFormat.toLowerCase())
+                    // .setAudioCodec("libfdk_aac")
+                    .addExtraArgs("-c:a", "libfdk_aac")
                     //.addExtraArgs("-q:a", "3")//orig 2
-                    .addExtraArgs("-vbr","3")
+                    .addExtraArgs("-vbr", "3")
                     .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
@@ -141,7 +145,7 @@ public final class Ffmpeg {
                     //   .setAudioQuality(1)
                     .setAudioCodec("libfdk_aac")
                     .setAudioBitRate(bitRate)
-                    .addExtraArgs("-profile:a","aac_he_v2")
+                    .addExtraArgs("-profile:a", "aac_he_v2")
                     .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
@@ -152,22 +156,23 @@ public final class Ffmpeg {
 
     }
     public ProgressListener prog = new ProgressListener() {
-          final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+
         @Override
         public void progress(Progress progress) {
 
-           double percentage = progress.out_time_ns / duration_ns;
-            
-       System.out.println(String.format(
-			"[%.0f%%] status:%s time:%s ms speed:%.2fx thread:%s",
-			percentage * 100,
-			progress.status,
-			FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
-			progress.speed,
-                        Thread.currentThread().getName()
-		));
-       
-       
+            final double duration_ns = in.getFormat().duration * TimeUnit.SECONDS.toNanos(1);
+
+            double percentage = progress.out_time_ns / duration_ns;
+
+            System.out.println(String.format(
+                    "[%.0f%%] status:%s time:%s ms speed:%.2fx thread:%s",
+                    percentage * 100,
+                    progress.status,
+                    FFmpegUtils.toTimecode(progress.out_time_ns, TimeUnit.NANOSECONDS),
+                    progress.speed,
+                    Thread.currentThread().getName()
+            ));
+
         }
     };
 
@@ -175,9 +180,9 @@ public final class Ffmpeg {
         executor = new FFmpegExecutor(ffmpeg, ffprobe);
         FFmpegJob job = executor.createJob(builder, prog);
         job.run();
-        int index =  FXMLDocumentController.s2.indexOf(file.getPath());
-        System.out.println("ff delete file: "+file.getPath()+ " "+index+" "+FXMLDocumentController.s2.get(index));
-        new File(FXMLDocumentController.s2.remove(index)).delete(); 
+        int index = FXMLDocumentController.s2.indexOf(file.getPath());
+        //System.out.println("ff delete file: "+file.getPath()+ " "+index+" "+FXMLDocumentController.s2.get(index));
+        new File(FXMLDocumentController.s2.remove(index)).delete();
 
     }
 
