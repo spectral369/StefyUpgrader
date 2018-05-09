@@ -19,7 +19,6 @@ public final class Folder {
 
     String pathToClips = null;
     int amount = 0;
-    final String format = ".MP3";
     List<File> files = new ArrayList<>();
 
     public List<File> getAllFiles() {
@@ -61,7 +60,9 @@ public final class Folder {
 
     public File[] findFiles(String path) {
         File dir = new File(path);
-        return dir.listFiles((File dir1, String name) -> name.endsWith(format) || name.endsWith(format.toLowerCase())
+        return dir.listFiles((File dir1, String name) -> name.endsWith(".mp3") || name.endsWith(".m4a") 
+                || name.endsWith(".mp4") || name.endsWith(".webm") || name.endsWith(".flac") || name.endsWith(".FLAC")
+                || name.endsWith(".MP4")
         );
     }
 

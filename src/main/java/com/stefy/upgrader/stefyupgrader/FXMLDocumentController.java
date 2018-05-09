@@ -146,10 +146,7 @@ public class FXMLDocumentController implements Initializable {
         //chooserDir.getExtensionFilters().removeAll(choser.getExtensionFilters());
         chooserDir.setTitle("Select a folder");
         chooserDir.setInitialDirectory(new File(System.getProperty("user.home")));
-        /*  chooserDir.getExtensionFilters().addAll(
-          new FileChooser.ExtensionFilter("*", "*")
-         
-         );*/
+     
         File fol = chooserDir.showDialog(song.getScene().getWindow());
         if (fol != null && fol.isDirectory()) {
 
@@ -172,7 +169,8 @@ public class FXMLDocumentController implements Initializable {
                 new FileChooser.ExtensionFilter("MP3", "*.mp3"),
                 new FileChooser.ExtensionFilter("M4A", "*.m4a"),
                 new FileChooser.ExtensionFilter("MP4", "*.mp4"),
-                new FileChooser.ExtensionFilter("WEBM", "*.webm")
+                new FileChooser.ExtensionFilter("WEBM", "*.webm"),
+                new FileChooser.ExtensionFilter("FLAC", "*.flac")
         );
 
         List<File> list = chooserFile.showOpenMultipleDialog(song.getScene().getWindow());
