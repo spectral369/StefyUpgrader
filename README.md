@@ -26,5 +26,5 @@
   
 ## Notes :
   * Developed and tested on Ubuntu only.  
-  
+  * Design after 'SoundConverter'
   
