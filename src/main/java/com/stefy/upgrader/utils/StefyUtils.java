@@ -29,9 +29,10 @@ public class StefyUtils {
                     = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 
             isFFMPEG = reader.readLine().contains("version");
-          //  System.out.println("FFMPEG found: " + isFFMPEG);
+            System.out.println("FFMPEG found: " + isFFMPEG);
 
         } catch (IOException e) {
+            System.out.println("Error FFMPEG");
         }
 
         return isFFMPEG;

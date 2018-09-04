@@ -113,8 +113,8 @@ public class FXMLDocumentController implements Initializable {
         //      bitRateType.getItems().add("AVERAGE(AVR)(not available for AAC)");
         bitRateType.getItems().add("VARIABLE(VBR)(not Documented)");
         bitRateType.getSelectionModel().selectFirst();
-        quality.getItems().add("Standard");
-        quality.getItems().add("High");
+        quality.getItems().add("Best Audio");
+        quality.getItems().add("Best Video");
         quality.getSelectionModel().selectLast();
 
         hz.getItems().add("12000hz");
@@ -263,7 +263,7 @@ public class FXMLDocumentController implements Initializable {
             }
         });
 
-        Label qua = new Label("Download Quality");
+        Label qua = new Label("Download Type");
 
         resample.selectedProperty().addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
             if (resample.isSelected()) {
@@ -419,7 +419,7 @@ public class FXMLDocumentController implements Initializable {
                                     });
                                 }
                             } catch (Exception e) {
-                                e.printStackTrace();
+                               // e.printStackTrace();
                                 Platform.runLater(() -> {
                                     int l = f.getAllFiles().indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));

@@ -103,14 +103,13 @@ public final class Ffmpeg {
         File o = Paths.get(file.getPath()).toFile();
 
         try {
-
-            in = ffprobe.probe(o.getPath());
+          
+            in = ffprobe.probe(o.getAbsolutePath());
         } catch (IOException e) {
-            Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, null, e);
+            Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, e.getMessage(), e);
 
             return false;
         }
-
         if (modeType.contains("VBR")) {
             if (!new File(outputDir).exists()) {
                 new File(outputDir).mkdir();
@@ -127,7 +126,11 @@ public final class Ffmpeg {
                     // .setAudioCodec("libfdk_aac")
                     .addExtraArgs("-c:a", "libfdk_aac")
                     //.addExtraArgs("-q:a", "3")//orig 2
-                    .addExtraArgs("-vbr", "3")
+                    .addExtraArgs("-vbr", "4")
+                    .addExtraArgs("-map_metadata","0")
+                     .addExtraArgs("-write_id3v2","3")
+                    .addExtraArgs("-write_id3v2","1")
+                   
                     .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
@@ -145,6 +148,9 @@ public final class Ffmpeg {
                     //   .setAudioQuality(1)
                     .setAudioCodec("libfdk_aac")
                     .setAudioBitRate(bitRate)
+                     .addExtraArgs("-map_metadata","0")
+                    .addExtraArgs("-write_id3v2","3")
+                    .addExtraArgs("-write_id3v2","1")
                     .addExtraArgs("-profile:a", "aac_he_v2")
                     .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
@@ -152,6 +158,7 @@ public final class Ffmpeg {
 
         }
         // builder.setVerbosity(FFmpegBuilder.Verbosity.VERBOSE);
+        System.out.println("Build done!");
         return true;
 
     }
@@ -178,8 +185,11 @@ public final class Ffmpeg {
 
     public void execute() {
         executor = new FFmpegExecutor(ffmpeg, ffprobe);
+        System.out.println("step1 done");
         FFmpegJob job = executor.createJob(builder, prog);
+        System.out.println("step2 done");
         job.run();
+        System.out.println("step3 done");
         int index = FXMLDocumentController.s2.indexOf(file.getPath());
         //System.out.println("ff delete file: "+file.getPath()+ " "+index+" "+FXMLDocumentController.s2.get(index));
         new File(FXMLDocumentController.s2.remove(index)).delete();

@@ -110,12 +110,13 @@ public final class YTDownloader {
 
     }
 
-    public boolean downloadYT(String link, int code) {
+ //   public boolean downloadYT(String link, int code) {
+    public boolean downloadYT(String link, String quality) {
         try {
 
             String pa = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "%(title)s-%(id)s.%(ext)s";
 
-            String[] command = new String[]{"youtube-dl", "-f", String.valueOf(code), "-o", pa, link.trim()};
+            String[] command = new String[]{"youtube-dl", "-f",  quality,"--add-metadata", "-o", pa, link.trim()};
 
             proc = new ProcessBuilder(command).start();
             BufferedReader reader
@@ -212,12 +213,20 @@ public final class YTDownloader {
             System.out.println("ERROR: Most likely the video is not available anymore !");
             downloadedFileName = f.getPath();
         }
+        
+        
+        
+        if (quality.equals("Best Audio")) {
+            downloadYT(link, "bestaudio" );
+        } else if (quality.equals("Best Video")) {
+            downloadYT(link, "bestvideo");
+        }
 
-        if (quality.equals("Standard")) {
+      /*  if (quality.equals("Standard")) {
             downloadYT(link, audioOnlyCode);
         } else if (quality.equals("High")) {
             downloadYT(link, audioBestCode);
-        }
+        }*/
 
         if (isSel) {
             FXMLDocumentController.s2.add(downloadedFileName);
