@@ -16,6 +16,7 @@ import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.CountDownLatch;
@@ -41,10 +42,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.input.Clipboard;
 import javafx.scene.layout.Pane;
 
 /**
@@ -71,6 +76,8 @@ public class FXMLDocumentController implements Initializable {
     private Pane header;
     @FXML
     private Button cancel;
+    @FXML
+    private Button addLink;
     /*  @FXML 
     private Button pause;*/
 
@@ -80,6 +87,7 @@ public class FXMLDocumentController implements Initializable {
     private final DirectoryChooser chooserDir = new DirectoryChooser();
     private final FileChooser chooserFile = new FileChooser();
     private String outputDir = System.getProperty("user.home") + "/converted/";
+    private boolean setDelSelected = true;
     List<Future<String>> futures = new ArrayList<>();
     JFXComboBox hz = new JFXComboBox();
     JFXCheckBox del = new JFXCheckBox("Delete");
@@ -95,8 +103,10 @@ public class FXMLDocumentController implements Initializable {
     private Task task = null;
     private Thread clean = null;
     private boolean isCancelled = false;
+    private TextArea linksArea;
 
     public CountDownLatch latch = null;
+    private List<String> YTLinks = null;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -106,6 +116,7 @@ public class FXMLDocumentController implements Initializable {
         convert.setDisable(true);
         addFile.setDisable(true);
         addFolder.setDisable(true);
+        addLink.setDisable(true);
         clear.setDisable(true);
         del.setSelected(setDelSelected);
         dest.setEditable(false);
@@ -124,6 +135,7 @@ public class FXMLDocumentController implements Initializable {
 
         hz.getSelectionModel().select(2);
         resample.setSelected(true);
+        YTLinks = new LinkedList<>();
         //  latch =  new CountDownLatch(1);
         // exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     }
@@ -146,7 +158,7 @@ public class FXMLDocumentController implements Initializable {
         //chooserDir.getExtensionFilters().removeAll(choser.getExtensionFilters());
         chooserDir.setTitle("Select a folder");
         chooserDir.setInitialDirectory(new File(System.getProperty("user.home")));
-     
+
         File fol = chooserDir.showDialog(song.getScene().getWindow());
         if (fol != null && fol.isDirectory()) {
 
@@ -189,13 +201,116 @@ public class FXMLDocumentController implements Initializable {
         status.setText("Ready");
     }
 
-    boolean setDelSelected = true;
+    @FXML
+    protected void handleLink() {
+        final Stage dialog = new Stage();
+
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(song.getScene().getWindow());
+        dialog.resizableProperty().setValue(Boolean.FALSE);
+
+        dialog.setResizable(false);
+        dialog.setMaximized(false);
+        dialog.setFullScreen(false);
+
+        dialog.iconifiedProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
+            dialog.close();
+        });
+        VBox dialogVbox = new VBox(20);
+
+        //code
+        Label addlinks = new Label("Add Youtube Links:");
+
+        linksArea = new TextArea() {
+            @Override
+            public void paste() {
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+
+                if (clipboard.hasString()) {
+
+                    String pattern = "(?<=watch\\?v=|/videos/|embed\\/|youtu.be\\/|\\/v\\/|watch\\?v%3D|%2Fvideos%2F|embed%2F|youtu.be%2F|%2Fv%2F)[^#\\&\\?\\n]*";
+
+                    Pattern compiledPattern = Pattern.compile(pattern);
+                    Matcher matcher = compiledPattern.matcher(clipboard.getString());
+                    if (matcher.find()) {
+
+                        appendText(clipboard.getString());
+                        appendText(System.getProperty("line.separator"));
+
+                    }
+                }
+
+            }
+
+        };
+
+        linksArea.setTooltip(new Tooltip("Paste YT links here"));
+        linksArea.setPrefColumnCount(45);
+        linksArea.setPrefRowCount(26);
+
+        linksArea.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+
+            if (newValue.contains(System.getProperty("line.separator"))) {
+
+                String pattern = "(?<=watch\\?v=|/videos/|embed\\/|youtu.be\\/|\\/v\\/|watch\\?v%3D|%2Fvideos%2F|embed%2F|youtu.be%2F|%2Fv%2F)[^#\\&\\?\\n]*";
+
+                Pattern compiledPattern = Pattern.compile(pattern);
+                Matcher matcher = compiledPattern.matcher(oldValue);
+                if (!matcher.find()) {
+
+                    Platform.runLater(() -> {
+                        if (!linksArea.getText().isEmpty()) {
+                            linksArea.deletePreviousChar();
+                        }
+                        linksArea.deleteText(linksArea.getText().indexOf(oldValue), (linksArea.getText().indexOf(oldValue) + oldValue.length()));
+                    });
+
+                }
+            }
+
+        });
+
+        //code
+        HBox h = new HBox();
+        JFXButton add = new JFXButton("Add");
+        add.setAlignment(Pos.BOTTOM_RIGHT);
+        add.addEventFilter(MouseEvent.MOUSE_PRESSED, (MouseEvent mouseEvent) -> {
+            //add each link
+
+            String[] token = linksArea.getText().split(System.getProperty("line.separator"));
+            for (String s : token) {
+
+                YTLinks.add(s);
+            }
+            setYTLinks();
+            in();
+            dialog.close();
+
+        });
+
+        JFXButton close = new JFXButton("Close");
+        close.setAlignment(Pos.BOTTOM_RIGHT);
+        close.addEventFilter(MouseEvent.MOUSE_PRESSED, (MouseEvent mouseEvent) -> {
+            dialog.close();
+        });
+        h.getChildren().addAll(add, close);
+        //  dialogVbox.getChildren().addAll(destination, dest, del, result, format, bitrate, bitRateType, qua, quality, res, resample, hz, h);
+
+        dialogVbox.getChildren().addAll(addlinks, linksArea, h);
+        Scene dialogScene = new Scene(dialogVbox, 385, 410);
+
+        dialog.setScene(dialogScene);
+        dialog.show();
+        h.setPadding(new Insets(0, 0, 0, 250));
+
+    }
 
     @FXML
     protected void handleOp() {
         convert.setDisable(false);
         addFile.setDisable(false);
         addFolder.setDisable(false);
+        addLink.setDisable(false);
         clear.setDisable(false);
 
         final Stage dialog = new Stage();
@@ -350,15 +465,60 @@ public class FXMLDocumentController implements Initializable {
         });
     }
 
+    private void setYTLinks() {
+        labels.clear();
+        pBars.clear();
+        YTLinks.stream().map((fi) -> new Label(fi)).map((l) -> {
+            l.setTooltip(new Tooltip(l.getText()));
+            return l;
+        }).map((l) -> {
+            labels.add(l);
+            return l;
+        }).map((_item) -> new JFXProgressBar(0.0)).map((pro) -> {
+            pro.setPrefWidth(30.0);
+            return pro;
+        }).map((pro) -> {
+            pro.setTooltip(new Tooltip("Progress..."));
+            return pro;
+        }).map((pro) -> {
+            pro.setId("nr");
+            return pro;
+        }).forEachOrdered((pro) -> {
+            pBars.add(pro);
+        });
+    }
+
     private final AtomicBoolean isDone = new AtomicBoolean(false);
 
     @FXML
     protected void handleConv() {
         if (f == null) {
             return;
-        } else if (f.getAllFiles().isEmpty()) {
+        } else if (f.getAllFiles().isEmpty() && YTLinks.isEmpty()) {
             return;
         }
+
+        int sw = 0;
+        if (!f.getAllFiles().isEmpty()) {
+            sw = 1;
+        } else if (!YTLinks.isEmpty()) {
+            sw = 2;
+        }
+
+        switch (sw) {
+            case 1:
+                runFilesConv();
+                break;
+            case 2:
+                runLinksConv();
+                break;
+            ///case 0
+            ///case default
+        }
+
+    }
+
+    private void runFilesConv() {
         isCancelled = false;
         if (!StefyUtils.isNetAvailable1()) {
             status.setText("Please check your internet connection !");
@@ -372,6 +532,7 @@ public class FXMLDocumentController implements Initializable {
             task = new Task<Void>() {
                 @Override
                 protected Void call() throws Exception {
+
                     for (File a : f.getAllFiles()) {
                         futures.add(exec.submit(() -> {
                             try {
@@ -419,7 +580,7 @@ public class FXMLDocumentController implements Initializable {
                                     });
                                 }
                             } catch (Exception e) {
-                               // e.printStackTrace();
+                                // e.printStackTrace();
                                 Platform.runLater(() -> {
                                     int l = f.getAllFiles().indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
@@ -479,7 +640,130 @@ public class FXMLDocumentController implements Initializable {
             });
             clean.start();
         }
+    }
 
+    private void runLinksConv() {
+        isCancelled = false;
+        if (!StefyUtils.isNetAvailable1()) {
+            status.setText("Please check your internet connection !");
+            status.setStyle("-fx-accent: red;");
+        } else {
+            header.setDisable(true);
+            cancel.setVisible(true);
+
+            exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+            latch = new CountDownLatch(1);
+            task = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+
+                    for (String a : YTLinks) {
+                        futures.add(exec.submit(() -> {
+                            try {
+                                Platform.runLater(() -> {
+                                    status.setText("Working....");
+                                    int l = YTLinks.indexOf(a);
+                                    Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                    if (n instanceof JFXProgressBar) {
+
+                                        ((JFXProgressBar) n).setProgress(0.3);
+                                    }
+                                });
+
+                                final YTDownloader downloader = new YTDownloader(a, outputDir, del.isSelected(), quality.getSelectionModel().getSelectedItem().toString());
+
+                                Platform.runLater(() -> {
+                                    int l = YTLinks.indexOf(a);
+                                    Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                    if (n instanceof JFXProgressBar) {
+                                        if (isCancelled) {
+                                            status.setStyle("-fx-accent: red;");
+                                        } else {
+                                            status.setStyle("-fx-accent: green;");
+                                        }
+                                        ((JFXProgressBar) n).setProgress(0.4);
+
+                                    }
+
+                                });
+                                if ((downloader.isValid) && (task.isDone())) {
+
+                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
+                                    Platform.runLater(() -> {
+                                        int l = YTLinks.indexOf(a);
+                                        Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                        if (n instanceof JFXProgressBar) {
+                                            if (isCancelled) {
+                                                status.setStyle("-fx-accent: red;");
+                                            } else {
+                                                status.setStyle("-fx-accent: green;");
+                                            }
+                                            ((JFXProgressBar) n).setProgress(1.0);
+                                        }
+
+                                    });
+                                }
+                            } catch (Exception e) {
+                                // e.printStackTrace();
+                                Platform.runLater(() -> {
+                                    int l = YTLinks.indexOf(a);
+                                    Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
+                                    if (n instanceof JFXProgressBar) {
+                                        status.setStyle("-fx-accent: red;");
+                                        ((JFXProgressBar) n).setProgress(1.0);
+                                    }
+                                });
+                            }
+                            //  if (a.equals(f.getAllFiles().get(f.getAllFiles().size() - 1))) {
+                            if (a.equals(YTLinks.get(YTLinks.size() - 1))) {
+                                isDone.set(true);
+                                latch.countDown();
+
+                            }
+
+                            return "success";
+                        }));
+
+                    }
+                    /* Platform.runLater(() -> {
+                        status.setText("Almost Done...");
+                        exec.shutdown();
+                    });*/
+                    //   
+                    return null;
+                }
+
+            };
+
+            task.run();
+            clean = new Thread(() -> {
+                try {
+
+                    latch.await();
+                    if (isDone.get()) {
+
+                        //futures.get(f.getAllFiles().size());
+                        task.cancel(true);
+                        exec.shutdown();
+                        header.setDisable(false);
+                        cancel.setVisible(false);
+                    }
+                    //task.cancel();
+
+                    Platform.runLater(() -> {
+                        if (isCancelled) {
+                            status.setStyle("-fx-accent: red;");
+                            status.setText("Cancelled");
+                        } else {
+                            status.setText("Done !");
+                        }
+                    });
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(FXMLDocumentController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            });
+            clean.start();
+        }
     }
 
     @FXML

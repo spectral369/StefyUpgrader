@@ -12,11 +12,13 @@
             <children>
                 <Pane fx:id="header" layoutX="7.0" prefHeight="78.0" prefWidth="584.0">
                     <children>
-                        <Button layoutY="2.0" mnemonicParsing="false" onAction="#handleConv" prefHeight="78.0" prefWidth="99.0" text="Convert" fx:id="convert" />
-                        <Button layoutX="105.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFiles" prefHeight="78.0" prefWidth="99.0" text="Add File" fx:id="addFile" />
-                        <Button layoutX="204.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFolder" prefHeight="78.0" prefWidth="99.0" text="Add Folder" fx:id="addFolder" />
-                        <Button layoutX="303.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleClear" prefHeight="78.0" prefWidth="99.0" text="Clear" fx:id="clear" />
+                        <Button fx:id="convert" layoutY="2.0" mnemonicParsing="false" onAction="#handleConv" prefHeight="78.0" prefWidth="99.0" text="Convert" />
+                        <Button fx:id="addFile" layoutX="105.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFiles" prefHeight="78.0" prefWidth="92.0" text="Add File" />
+                        <Button fx:id="addFolder" layoutX="195.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleFolder" prefHeight="78.0" prefWidth="99.0" text="Add Folder" />
+                        <Button fx:id="addLink" layoutX="292.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleLink" prefHeight="78.0" prefWidth="99.0" text="Add YT Link" />
+                        <Button fx:id="clear" layoutX="391.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleClear" prefHeight="78.0" prefWidth="99.0" text="Clear" />
                         <Button layoutX="496.0" layoutY="2.0" mnemonicParsing="false" onAction="#handleOp" prefHeight="78.0" prefWidth="99.0" text="Options" />
+                 
                     </children>
                 </Pane>
                 <ScrollPane layoutX="2.0" layoutY="93.0" prefHeight="416.0" prefWidth="613.0">
@@ -46,7 +48,7 @@
                     </content> 
                 </ScrollPane>
                 <Label fx:id="status" layoutX="14.0" layoutY="517.0" prefHeight="26.0" prefWidth="225.0" text="Ready" />
-                <Button layoutX="553.0" layoutY="518.0" mnemonicParsing="false" text="Cancel" onAction="#handleCancel" fx:id="cancel" />
+                <Button fx:id="cancel" layoutX="553.0" layoutY="518.0" mnemonicParsing="false" onAction="#handleCancel" text="Cancel" />
                 <!--   <Button layoutX="491.0" layoutY="518.0" mnemonicParsing="false" text="Pause" onAction="#handlePause" fx:id="pause" />-->
             </children>
         </Pane>

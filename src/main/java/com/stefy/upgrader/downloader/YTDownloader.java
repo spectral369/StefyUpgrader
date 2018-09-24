@@ -31,6 +31,7 @@ public final class YTDownloader {
     String quality = "Standard";
     private String link = "";
     public boolean isValid = false;
+    private String YTLink = null;
 
     public YTDownloader() {
 
@@ -58,6 +59,20 @@ public final class YTDownloader {
         test();
 
     }
+
+    public YTDownloader(String link, String outputDir, boolean isSelected, String quality) {
+
+        if (!StefyUtils.checkYoutube_dl()) {
+            System.out.println("Youtube-dl is missing, please install: sudo apt install youtube-dl");
+            System.exit(2);
+        }
+        this.YTLink = link;
+        this.outputDir = outputDir;
+        this.isSel = isSelected;
+        this.quality = quality;
+        test();
+    }
+
 
     /*   
     public File getOrigFile(){
@@ -110,13 +125,13 @@ public final class YTDownloader {
 
     }
 
- //   public boolean downloadYT(String link, int code) {
+    //   public boolean downloadYT(String link, int code) {
     public boolean downloadYT(String link, String quality) {
         try {
 
             String pa = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "%(title)s-%(id)s.%(ext)s";
 
-            String[] command = new String[]{"youtube-dl", "-f",  quality,"--add-metadata", "-o", pa, link.trim()};
+            String[] command = new String[]{"youtube-dl", "-f", quality, "--add-metadata", "-o", pa, link.trim()};
 
             proc = new ProcessBuilder(command).start();
             BufferedReader reader
@@ -132,7 +147,7 @@ public final class YTDownloader {
 
                         System.out.print(".");
                         Thread.sleep(1000);
-                        //  proc.waitFor();
+                        // proc.waitFor();
                     }
 
                     if (!isSel) {
@@ -156,7 +171,7 @@ public final class YTDownloader {
                     }
 
                     while (proc.isAlive()) {
-                        //proc.waitFor();
+                        // proc.waitFor();
                         System.out.print(".");
                         Thread.sleep(1000);
 
@@ -183,7 +198,10 @@ public final class YTDownloader {
         return "https://www.youtube.com/watch?v=" + code;
     }
 
-    public String getYTCode(File f) {
+    public String getYTCode(File f) throws Exception {
+        if (f == null) {
+            throw new Exception("not a file");
+        }
         int b = f.getName().lastIndexOf(".");
         int a = b - 12;
 
@@ -196,38 +214,47 @@ public final class YTDownloader {
 
     public String test() {
 
-        String a = getYTCode(f);
+        String a = null;
+        try {
+            a = getYTCode(f);
+        } catch (Exception e) {
+
+            a = YTLink;
+        }
+
         if (a == null) {
             isValid = false;
             downloadedFileName = f.getPath();
             return "withoutCode";
 
         }
-
-        link = makeYTLink(a);
+        if (YTLink != null || YTLink.isEmpty()) {
+            link = YTLink;
+        } else {
+            link = makeYTLink(a);
+        }
 
         try {
+
             int ytFormatCodes = getYTFormatCodes(link);
+
         } catch (Exception e) {
             isValid = false;
             System.out.println("ERROR: Most likely the video is not available anymore !");
             downloadedFileName = f.getPath();
         }
-        
-        
-        
+
         if (quality.equals("Best Audio")) {
-            downloadYT(link, "bestaudio" );
+            downloadYT(link, "bestaudio");
         } else if (quality.equals("Best Video")) {
             downloadYT(link, "bestvideo");
         }
 
-      /*  if (quality.equals("Standard")) {
+        /*  if (quality.equals("Standard")) {
             downloadYT(link, audioOnlyCode);
         } else if (quality.equals("High")) {
             downloadYT(link, audioBestCode);
         }*/
-
         if (isSel) {
             FXMLDocumentController.s2.add(downloadedFileName);
         }
