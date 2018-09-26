@@ -16,6 +16,7 @@ import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -88,10 +89,12 @@ public class FXMLDocumentController implements Initializable {
     private final FileChooser chooserFile = new FileChooser();
     private String outputDir = System.getProperty("user.home") + "/converted/";
     private boolean setDelSelected = true;
+    private boolean setComporessSelected = false;
     List<Future<String>> futures = new ArrayList<>();
     JFXComboBox hz = new JFXComboBox();
     JFXCheckBox del = new JFXCheckBox("Delete");
     TextField dest = new TextField(outputDir);
+    JFXCheckBox compress = new JFXCheckBox("Reduce Size?");
 
     JFXComboBox format = new JFXComboBox();
     JFXComboBox bitRateType = new JFXComboBox();
@@ -126,14 +129,20 @@ public class FXMLDocumentController implements Initializable {
         bitRateType.getSelectionModel().selectFirst();
         quality.getItems().add("Best Audio");
         quality.getItems().add("Best Video");
-        quality.getSelectionModel().selectLast();
-
+        quality.getSelectionModel().selectFirst();
+        format.getItems().add("AAC");
+        format.getItems().add("M4A");
+        format.getSelectionModel().selectFirst();
+        
+        compress.setSelected(false);
+        
+        hz.getItems().add("default");
         hz.getItems().add("12000hz");
         hz.getItems().add("19200hz");
         hz.getItems().add("32000hz");
         hz.getItems().add("48000hz");
 
-        hz.getSelectionModel().select(2);
+        hz.getSelectionModel().selectFirst();
         resample.setSelected(true);
         YTLinks = new LinkedList<>();
         //  latch =  new CountDownLatch(1);
@@ -204,7 +213,7 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     protected void handleLink() {
         final Stage dialog = new Stage();
-
+        
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(song.getScene().getWindow());
         dialog.resizableProperty().setValue(Boolean.FALSE);
@@ -278,10 +287,7 @@ public class FXMLDocumentController implements Initializable {
             //add each link
 
             String[] token = linksArea.getText().split(System.getProperty("line.separator"));
-            for (String s : token) {
-
-                YTLinks.add(s);
-            }
+            YTLinks.addAll(Arrays.asList(token));
             setYTLinks();
             in();
             dialog.close();
@@ -357,9 +363,14 @@ public class FXMLDocumentController implements Initializable {
 
         Label result = new Label("Result");
 
-        format.getItems().add("AAC");
-        format.getSelectionModel().selectFirst();
+       
         Label bitrate = new Label("Bit Rate");
+        
+        compress.setTooltip(new Tooltip("Reduce file size(Usually doesn't affect quality)"));
+        
+        compress.setOnMouseClicked(event->{
+        setComporessSelected =!setComporessSelected;
+        });
 
         Label res = new Label("Resample?");
         bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
@@ -399,9 +410,9 @@ public class FXMLDocumentController implements Initializable {
         h.setPadding(new Insets(0, 0, 0, 240));
 
         //options
-        dialogVbox.getChildren().addAll(destination, dest, del, result, format, bitrate, bitRateType, qua, quality, res, resample, hz, h);
+        dialogVbox.getChildren().addAll(destination, dest, del, result, format,compress, bitrate, bitRateType, qua, quality, res, resample, hz, h);
 
-        Scene dialogScene = new Scene(dialogVbox, 300, 520);
+        Scene dialogScene = new Scene(dialogVbox, 300, 550);
 
         dialog.setScene(dialogScene);
         dialog.show();
@@ -564,7 +575,7 @@ public class FXMLDocumentController implements Initializable {
                                 });
                                 if ((downloader.isValid) && (task.isDone())) {
 
-                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
+                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString(),setComporessSelected);
                                     Platform.runLater(() -> {
                                         int l = f.getAllFiles().indexOf(a);
                                         Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
@@ -688,7 +699,7 @@ public class FXMLDocumentController implements Initializable {
                                 });
                                 if ((downloader.isValid) && (task.isDone())) {
 
-                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString());
+                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString(),setComporessSelected);
                                     Platform.runLater(() -> {
                                         int l = YTLinks.indexOf(a);
                                         Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
@@ -790,8 +801,12 @@ public class FXMLDocumentController implements Initializable {
     }
 
     private int hertz(String hz) {
+        if(hz.equals("default"))
+            return 0;
+        else{
 
         switch (Integer.parseInt(hz.substring(0, hz.length() - 2))) {
+            
             case 12000:
                 return 120;
             case 192000:
@@ -802,6 +817,7 @@ public class FXMLDocumentController implements Initializable {
                 return 480;
         }
         return 192;
+        }
     }
 
 }

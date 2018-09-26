@@ -16,7 +16,7 @@
 
     <organization>
         <!-- Used as the 'Vendor' for JNLP generation -->
-        <name>Your Organisation</name>
+        <name>Home Project</name>
     </organization>
 
     <build>
@@ -102,15 +102,43 @@
                     </additionalClasspathElements>
                 </configuration>
             </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <mainClass>com.stefy.upgrader.stefyupgrader.MainApp</mainClass>
+                        </manifest>
+
+                    </archive>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id> <!-- this is used for inheritance merges -->
+                        <phase>package</phase> <!-- bind to the packaging phase -->
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            
         </plugins>
     </build>
     <dependencies>
-      <!-- https://mvnrepository.com/artifact/com.jfoenix/jfoenix -->
-<dependency>
-    <groupId>com.jfoenix</groupId>
-    <artifactId>jfoenix</artifactId>
-    <version>8.0.3</version>
-</dependency>
+        <!-- https://mvnrepository.com/artifact/com.jfoenix/jfoenix -->
+        <dependency>
+            <groupId>com.jfoenix</groupId>
+            <artifactId>jfoenix</artifactId>
+            <version>8.0.3</version>
+        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
         <dependency>
@@ -125,12 +153,12 @@
             <version>1.7.25</version>
             <scope>test</scope>
         </dependency>
-       <!-- https://mvnrepository.com/artifact/net.bramp.ffmpeg/ffmpeg -->
-<dependency>
-    <groupId>net.bramp.ffmpeg</groupId>
-    <artifactId>ffmpeg</artifactId>
-    <version>0.6.2</version>
-</dependency>
+        <!-- https://mvnrepository.com/artifact/net.bramp.ffmpeg/ffmpeg -->
+        <dependency>
+            <groupId>net.bramp.ffmpeg</groupId>
+            <artifactId>ffmpeg</artifactId>
+            <version>0.6.2</version>
+        </dependency>
 
 
 

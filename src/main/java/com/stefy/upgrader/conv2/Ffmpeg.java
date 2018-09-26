@@ -15,6 +15,8 @@ import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,6 +46,7 @@ public final class Ffmpeg {
     int channels = 2;
     int sample_rate = 48_0000;//default
     String modeType = null;
+    private boolean compress = false;
 
     /* public  Ffmpeg() {
 
@@ -63,7 +66,7 @@ public final class Ffmpeg {
         }
         this.file =null;
     }*/
-    public Ffmpeg(File file, String outputFormat, String outputDir, int bitRate, String type) {
+    public Ffmpeg(File file, String outputFormat, String outputDir, int bitRate, String type, boolean compress) {
         boolean is = StefyUtils.checkFFPEG_Avconv();
         if (!is) {
             System.out.println("FFMPEG is Missing");
@@ -81,9 +84,14 @@ public final class Ffmpeg {
 
         this.file = file;
         this.outputDir = outputDir;
+        if (bitRate == 0) {
+            this.bitRate = 0;
+        } else {
+            this.bitRate = bitRate * 1000L;
+        }
 
-        this.bitRate = bitRate * 1000L;
         this.modeType = type;
+        this.compress = compress;
         String s = setOutputFormat(outputFormat);
         if (s != null) {
             this.outputFormat = s;
@@ -103,7 +111,7 @@ public final class Ffmpeg {
         File o = Paths.get(file.getPath()).toFile();
 
         try {
-          
+
             in = ffprobe.probe(o.getAbsolutePath());
         } catch (IOException e) {
             Logger.getLogger(Ffmpeg.class.getName()).log(Level.SEVERE, e.getMessage(), e);
@@ -114,45 +122,86 @@ public final class Ffmpeg {
             if (!new File(outputDir).exists()) {
                 new File(outputDir).mkdir();
             }
+            List<String> flags = new LinkedList<>();
+            flags.add("-c:a");
+            flags.add("libfdk_aac");
+            flags.add("-vbr");
+            flags.add("4");
+            if (compress) {
+                flags.add("-profile:a");
+                flags.add("aac_he_v2");
+            }
+            flags.add("-map_metadata");
+            flags.add("0");
+            flags.add("-write_id3v2");
+            flags.add("3");
+            flags.add("-write_id3v2");
+            flags.add("1");
+            
+            String[] array =new String[flags.size()];
+           for(int i = 0;i<flags.size();i++){
+               array[i]=flags.get(i);
+           }
 
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
-                    .addOutput(outputDir + filename + ".aac")
+                    .addOutput(outputDir + filename + "." + outputFormat.toLowerCase())
                     .setAudioChannels(2)
                     // .setAudioQuality(1)
-
+                    .addExtraArgs(array)
                     // .setAudioCodec(outputFormat.toLowerCase())
                     // .setAudioCodec("libfdk_aac")
-                    .addExtraArgs("-c:a", "libfdk_aac")
-                    //.addExtraArgs("-q:a", "3")//orig 2
-                    .addExtraArgs("-vbr", "4")
-                    .addExtraArgs("-map_metadata","0")
-                     .addExtraArgs("-write_id3v2","3")
-                    .addExtraArgs("-write_id3v2","1")
-                   
-                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                   // .addExtraArgs("-c:a", "libfdk_aac")
+                   // .addExtraArgs("-vbr", "4")
+                    // .addExtraArgs("-profile:a", "aac_he_v2")
+                   // .addExtraArgs("-map_metadata", "0")
+                    //.addExtraArgs("-write_id3v2", "3")
+                   // .addExtraArgs("-write_id3v2", "1")
+                    // .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
                     //.setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
         } else {
-
+          
             if (!new File(outputDir).exists()) {
                 new File(outputDir).mkdir();
             }
 
+            if (bitRate == 0) {
+                bitRate = in.getFormat().bit_rate;
+            }
+            List<String> flags = new LinkedList<>();
+            if (compress) {
+                flags.add("-profile:a");
+                flags.add("aac_he_v2");
+            }
+            flags.add("-map_metadata");
+            flags.add("0");
+            flags.add("-write_id3v2");
+            flags.add("3");
+            flags.add("-write_id3v2");
+            flags.add("1");
+              String[] array =new String[flags.size()];
+           for(int i = 0;i<flags.size();i++){
+               array[i]=flags.get(i);
+           }
+            
+            
             builder = new FFmpegBuilder()
                     .setInput(in)
                     .overrideOutputFiles(true)
-                    .addOutput(outputDir + filename + ".aac")
+                    .addOutput(outputDir + filename + "." + outputFormat.toLowerCase())
                     .setAudioChannels(2)
                     //   .setAudioQuality(1)
                     .setAudioCodec("libfdk_aac")
                     .setAudioBitRate(bitRate)
-                     .addExtraArgs("-map_metadata","0")
-                    .addExtraArgs("-write_id3v2","3")
-                    .addExtraArgs("-write_id3v2","1")
-                    .addExtraArgs("-profile:a", "aac_he_v2")
-                    .setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+                    .addExtraArgs(array)
+                 //   .addExtraArgs("-map_metadata", "0")
+                  //  .addExtraArgs("-write_id3v2", "3")
+                   // .addExtraArgs("-write_id3v2", "1")
+                    //.addExtraArgs("-profile:a", "aac_he_v2")
+                    //.setAudioSampleRate(FFmpeg.AUDIO_SAMPLE_48000)//48000
+
                     // .setStrict(FFmpegBuilder.Strict.EXPERIMENTAL)
                     .done();
 
