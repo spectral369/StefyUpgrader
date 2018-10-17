@@ -157,6 +157,7 @@ public class FXMLDocumentController implements Initializable {
         pBars.clear();
         labels.clear();
         f.getAllFiles().clear();
+        YTLinks.clear();
         status.setText("Cleared...");
 
     }
@@ -372,7 +373,7 @@ public class FXMLDocumentController implements Initializable {
         setComporessSelected =!setComporessSelected;
         });
 
-        Label res = new Label("Resample?");
+        Label res = new Label("Select bit rate");//Resample
         bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
             if (newValue.toString().contains("VBR")) {
                 if (resample != null && hz != null) {
