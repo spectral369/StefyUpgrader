@@ -8,10 +8,12 @@ package com.stefy.upgrader.stefyupgrader;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXProgressBar;
+//import com.jfoenix.controls.JFXProgressBar;
 import com.stefy.upgrader.conv2.Ffmpeg;
 import com.stefy.upgrader.downloader.YTDownloader;
 import com.stefy.upgrader.folder.Folder;
+import com.stefy.upgrader.utils.StefyCodecs;
+import com.stefy.upgrader.utils.StefyFormats;
 import com.stefy.upgrader.utils.StefyUtils;
 import java.io.File;
 import java.net.URL;
@@ -30,6 +32,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
@@ -83,7 +86,7 @@ public class FXMLDocumentController implements Initializable {
     private Button pause;*/
 
     private final List<Label> labels = new ArrayList<>();
-    private final List<JFXProgressBar> pBars = new ArrayList<>();
+    private final List</*JFXProgressBar*/ProgressBar> pBars = new ArrayList<>();
     private final Folder f = new Folder();
     private final DirectoryChooser chooserDir = new DirectoryChooser();
     private final FileChooser chooserFile = new FileChooser();
@@ -91,19 +94,20 @@ public class FXMLDocumentController implements Initializable {
     private boolean setDelSelected = true;
     private boolean setComporessSelected = false;
     List<Future<String>> futures = new ArrayList<>();
-    JFXComboBox hz = new JFXComboBox();
+    JFXComboBox<String> hz = new JFXComboBox<String>();
     JFXCheckBox del = new JFXCheckBox("Delete");
     TextField dest = new TextField(outputDir);
     JFXCheckBox compress = new JFXCheckBox("Reduce Size?");
 
-    JFXComboBox format = new JFXComboBox();
-    JFXComboBox bitRateType = new JFXComboBox();
-    JFXComboBox quality = new JFXComboBox();
+    JFXComboBox<String> format = new JFXComboBox<String>();
+    JFXComboBox<String> bitRateType = new JFXComboBox<String>();
+    JFXComboBox<String> quality = new JFXComboBox<String>();
     public static List<String> s2 = new ArrayList<>();
-    JFXCheckBox resample = new JFXCheckBox("Resample");
+    JFXCheckBox resample = new JFXCheckBox("Change bit rate");
+    JFXComboBox<String> codec = new JFXComboBox<String>();
 
     private ExecutorService exec = null;
-    private Task task = null;
+    private Task<Void> task = null;
     private Thread clean = null;
     private boolean isCancelled = false;
     private TextArea linksArea;
@@ -130,12 +134,22 @@ public class FXMLDocumentController implements Initializable {
         quality.getItems().add("Best Audio");
         quality.getItems().add("Best Video");
         quality.getSelectionModel().selectFirst();
-        format.getItems().add("AAC");
-        format.getItems().add("M4A");
+        //  format.getItems().add("AAC");
+        // format.getItems().add("M4A");
+        for (StefyFormats sf : StefyFormats.values()) {
+            format.getItems().add(sf.toString());
+        }
+
         format.getSelectionModel().selectFirst();
-        
+        format.getItems().remove(format.getItems().size() - 1);
+
+        for (StefyCodecs sc : StefyCodecs.values()) {
+            codec.getItems().add(sc.toString());
+        }
+        codec.getSelectionModel().selectFirst();
+
         compress.setSelected(false);
-        
+
         hz.getItems().add("default");
         hz.getItems().add("12000hz");
         hz.getItems().add("19200hz");
@@ -187,13 +201,18 @@ public class FXMLDocumentController implements Initializable {
         chooserFile.getExtensionFilters().removeAll(chooserFile.getExtensionFilters());
         chooserFile.setTitle("Select a folder");
         chooserFile.setInitialDirectory(new File(System.getProperty("user.home")));
-        chooserFile.getExtensionFilters().addAll(
+        /*chooserFile.getExtensionFilters().addAll( //old
                 new FileChooser.ExtensionFilter("MP3", "*.mp3"),
                 new FileChooser.ExtensionFilter("M4A", "*.m4a"),
                 new FileChooser.ExtensionFilter("MP4", "*.mp4"),
                 new FileChooser.ExtensionFilter("WEBM", "*.webm"),
                 new FileChooser.ExtensionFilter("FLAC", "*.flac")
-        );
+        );*/
+        FileChooser.ExtensionFilter fileExtensions
+                = new FileChooser.ExtensionFilter(
+                        "Song Formats", "*.mp3", "*.m4a", "*.mp4", "*.webm", "*.flac");
+
+        chooserFile.getExtensionFilters().add(fileExtensions);
 
         List<File> list = chooserFile.showOpenMultipleDialog(song.getScene().getWindow());
         if (list != null) {
@@ -214,7 +233,7 @@ public class FXMLDocumentController implements Initializable {
     @FXML
     protected void handleLink() {
         final Stage dialog = new Stage();
-        
+
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(song.getScene().getWindow());
         dialog.resizableProperty().setValue(Boolean.FALSE);
@@ -356,6 +375,38 @@ public class FXMLDocumentController implements Initializable {
 
         });
 
+        codec.setTooltip(new Tooltip("Codec that will be used!"));
+        codec.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            if (codec.getSelectionModel().getSelectedIndex() == 1) {
+                format.getItems().clear();
+                for (StefyFormats sf : StefyFormats.values()) {
+                    format.getItems().add(sf.toString());
+                }
+                format.getSelectionModel().selectLast();
+                format.setDisable(true);
+
+            } else {
+                format.getItems().clear();
+                for (StefyFormats sf : StefyFormats.values()) {
+                    format.getItems().add(sf.toString());
+                }
+                format.getSelectionModel().selectFirst();
+                format.getItems().remove(format.getItems().size() - 1);
+
+                format.setDisable(false);
+
+            }
+
+            compress.setVisible(!compress.isVisible());
+            bitRateType.getSelectionModel().selectFirst();
+            //  format.setDisable(!format.isDisabled());
+            hz.getSelectionModel().select(1);
+            if (codec.getSelectionModel().isSelected(0)) {
+                hz.getSelectionModel().selectFirst();
+            }
+
+        });
+
         del.setTooltip(new Tooltip("delete files after converting?"));
 
         del.setOnMouseClicked(e -> {
@@ -364,28 +415,31 @@ public class FXMLDocumentController implements Initializable {
 
         Label result = new Label("Result");
 
-       
-        Label bitrate = new Label("Bit Rate");
-        
+        Label bitrate = new Label("Bit Rate Type");
+
         compress.setTooltip(new Tooltip("Reduce file size(Usually doesn't affect quality)"));
-        
-        compress.setOnMouseClicked(event->{
-        setComporessSelected =!setComporessSelected;
+
+        compress.setOnMouseClicked(event -> {
+            setComporessSelected = !setComporessSelected;
         });
 
         Label res = new Label("Select bit rate");//Resample
-        bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue observable, Object oldValue, Object newValue) -> {
+        bitRateType.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
             if (newValue.toString().contains("VBR")) {
                 if (resample != null && hz != null) {
                     res.setVisible(false);
-                    resample.setVisible(false);
-                    hz.setVisible(false);
+                    if (!codec.getSelectionModel().getSelectedItem().equals(StefyCodecs.libopus.toString())) {
+                        resample.setVisible(false);
+                        hz.setVisible(false);
+                        hz.getSelectionModel().select(1);
+                    }
                 }
             } else {
                 if (resample != null && hz != null) {
-
+                    hz.getSelectionModel().selectFirst();
                     resample.setVisible(true);
                     hz.setVisible(true);
+                    res.setVisible(true);
                 }
             }
         });
@@ -411,9 +465,9 @@ public class FXMLDocumentController implements Initializable {
         h.setPadding(new Insets(0, 0, 0, 240));
 
         //options
-        dialogVbox.getChildren().addAll(destination, dest, del, result, format,compress, bitrate, bitRateType, qua, quality, res, resample, hz, h);
+        dialogVbox.getChildren().addAll(destination, dest, codec, del, result, format, compress, bitrate, bitRateType, qua, quality, res, resample, hz, h);
 
-        Scene dialogScene = new Scene(dialogVbox, 300, 550);
+        Scene dialogScene = new Scene(dialogVbox, 300, 650);
 
         dialog.setScene(dialogScene);
         dialog.show();
@@ -422,10 +476,11 @@ public class FXMLDocumentController implements Initializable {
 
     public void in() {
 
-        progr.setPadding(new Insets(7, 5, 5, 5));
+        progr.setPadding(new Insets(5, 5, 5, 5));
 
-        progr.setSpacing(13);
-        song.setPadding(new Insets(0, 5, 0, 10));
+        progr.setSpacing(4);//13
+        song.setSpacing(8);
+        song.setPadding(new Insets(5, 5, 0, 10));
         song.getChildren().clear();
         progr.getChildren().clear();
 
@@ -439,21 +494,21 @@ public class FXMLDocumentController implements Initializable {
 
     }
 
-    private void addS(Label l) {
+    /*   private void addS(Label l) {
 
         if (labels.indexOf(l) == -1) {
 
             labels.add(l);
         }
 
-    }
+    }*/
 
-    private void addP(JFXProgressBar p) {
+ /* private void addP(JFXProgressBar p) {
         if (pBars.indexOf(p) == -1) {
             pBars.add(p);
         }
     }
-
+     */
     private void setSongNames() {
         labels.clear();
         pBars.clear();
@@ -463,7 +518,7 @@ public class FXMLDocumentController implements Initializable {
         }).map((l) -> {
             labels.add(l);
             return l;
-        }).map((_item) -> new JFXProgressBar(0.0)).map((pro) -> {
+        }).map((_item) -> new ProgressBar(0.0)/*new JFXProgressBar(0.0)*/).map((pro) -> {
             pro.setPrefWidth(30.0);
             return pro;
         }).map((pro) -> {
@@ -486,7 +541,7 @@ public class FXMLDocumentController implements Initializable {
         }).map((l) -> {
             labels.add(l);
             return l;
-        }).map((_item) -> new JFXProgressBar(0.0)).map((pro) -> {
+        }).map((_item) -> new /*JFXProgressBar(0.0)*/ ProgressBar(0.0)).map((pro) -> {
             pro.setPrefWidth(30.0);
             return pro;
         }).map((pro) -> {
@@ -552,9 +607,9 @@ public class FXMLDocumentController implements Initializable {
                                     status.setText("Working....");
                                     int l = f.getAllFiles().indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
 
-                                        ((JFXProgressBar) n).setProgress(0.3);
+                                        (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(0.3);
                                     }
                                 });
 
@@ -563,30 +618,37 @@ public class FXMLDocumentController implements Initializable {
                                 Platform.runLater(() -> {
                                     int l = f.getAllFiles().indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                         if (isCancelled) {
                                             status.setStyle("-fx-accent: red;");
                                         } else {
                                             status.setStyle("-fx-accent: green;");
                                         }
-                                        ((JFXProgressBar) n).setProgress(0.4);
+                                        (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(0.4);
 
                                     }
 
                                 });
                                 if ((downloader.isValid) && (task.isDone())) {
 
-                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString(),setComporessSelected);
+                                    /*final Ffmpeg ff = */
+                                    new Ffmpeg(new File(downloader.getDownloadedFileName()),
+                                            format.getSelectionModel().getSelectedItem().toString(),
+                                            outputDir,
+                                            hertz(hz.getValue().toString()),
+                                            bitRateType.getSelectionModel().getSelectedItem().toString(),
+                                            setComporessSelected,
+                                            codec.getSelectionModel().getSelectedItem().toString());
                                     Platform.runLater(() -> {
                                         int l = f.getAllFiles().indexOf(a);
                                         Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                        if (n instanceof JFXProgressBar) {
+                                        if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                             if (isCancelled) {
                                                 status.setStyle("-fx-accent: red;");
                                             } else {
                                                 status.setStyle("-fx-accent: green;");
                                             }
-                                            ((JFXProgressBar) n).setProgress(1.0);
+                                            (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(1.0);
                                         }
 
                                     });
@@ -596,9 +658,9 @@ public class FXMLDocumentController implements Initializable {
                                 Platform.runLater(() -> {
                                     int l = f.getAllFiles().indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                         status.setStyle("-fx-accent: red;");
-                                        ((JFXProgressBar) n).setProgress(1.0);
+                                        (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(1.0);
                                     }
                                 });
                             }
@@ -676,9 +738,9 @@ public class FXMLDocumentController implements Initializable {
                                     status.setText("Working....");
                                     int l = YTLinks.indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
 
-                                        ((JFXProgressBar) n).setProgress(0.3);
+                                        (/*(JFXProgressBar) */(ProgressBar) n).setProgress(0.3);
                                     }
                                 });
 
@@ -687,30 +749,37 @@ public class FXMLDocumentController implements Initializable {
                                 Platform.runLater(() -> {
                                     int l = YTLinks.indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                         if (isCancelled) {
                                             status.setStyle("-fx-accent: red;");
                                         } else {
                                             status.setStyle("-fx-accent: green;");
                                         }
-                                        ((JFXProgressBar) n).setProgress(0.4);
+                                        (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(0.4);
 
                                     }
 
                                 });
                                 if ((downloader.isValid) && (task.isDone())) {
 
-                                    final Ffmpeg ff = new Ffmpeg(new File(downloader.getDownloadedFileName()), format.getSelectionModel().getSelectedItem().toString(), outputDir, hertz(hz.getValue().toString()), bitRateType.getSelectionModel().getSelectedItem().toString(),setComporessSelected);
+                                    /* final Ffmpeg ff = */
+                                    new Ffmpeg(new File(downloader.getDownloadedFileName()),
+                                            format.getSelectionModel().getSelectedItem().toString(),
+                                            outputDir,
+                                            hertz(hz.getValue().toString()),
+                                            bitRateType.getSelectionModel().getSelectedItem().toString(),
+                                            setComporessSelected,
+                                            codec.getSelectionModel().getSelectedItem().toString());
                                     Platform.runLater(() -> {
                                         int l = YTLinks.indexOf(a);
                                         Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                        if (n instanceof JFXProgressBar) {
+                                        if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                             if (isCancelled) {
                                                 status.setStyle("-fx-accent: red;");
                                             } else {
                                                 status.setStyle("-fx-accent: green;");
                                             }
-                                            ((JFXProgressBar) n).setProgress(1.0);
+                                            (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(1.0);
                                         }
 
                                     });
@@ -720,9 +789,9 @@ public class FXMLDocumentController implements Initializable {
                                 Platform.runLater(() -> {
                                     int l = YTLinks.indexOf(a);
                                     Node n = progr.getChildren().get(progr.getChildren().indexOf(pBars.get(l)));
-                                    if (n instanceof JFXProgressBar) {
+                                    if (n instanceof ProgressBar/*JFXProgressBar*/) {
                                         status.setStyle("-fx-accent: red;");
-                                        ((JFXProgressBar) n).setProgress(1.0);
+                                        (/*(JFXProgressBar)*/(ProgressBar) n).setProgress(1.0);
                                     }
                                 });
                             }
@@ -802,22 +871,22 @@ public class FXMLDocumentController implements Initializable {
     }
 
     private int hertz(String hz) {
-        if(hz.equals("default"))
+        if (hz.equals("default")) {
             return 0;
-        else{
+        } else {
 
-        switch (Integer.parseInt(hz.substring(0, hz.length() - 2))) {
-            
-            case 12000:
-                return 120;
-            case 192000:
-                return 192;
-            case 32000:
-                return 320;
-            case 48000:
-                return 480;
-        }
-        return 192;
+            switch (Integer.parseInt(hz.substring(0, hz.length() - 2))) {
+
+                case 12000:
+                    return 120;
+                case 192000:
+                    return 192;
+                case 32000:
+                    return 320;
+                case 48000:
+                    return 480;
+            }
+            return 192;
         }
     }
 

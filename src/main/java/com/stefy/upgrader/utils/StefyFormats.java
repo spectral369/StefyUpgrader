@@ -11,6 +11,7 @@ package com.stefy.upgrader.utils;
  */
 public enum StefyFormats {
     AAC,
-    M4A
+    M4A,
+    OPUS
 
 }

@@ -32,6 +32,7 @@ public final class YTDownloader {
     private String link = "";
     public boolean isValid = false;
     private String YTLink = null;
+    private boolean isFile = true;
 
     public YTDownloader() {
 
@@ -70,6 +71,7 @@ public final class YTDownloader {
         this.outputDir = outputDir;
         this.isSel = isSelected;
         this.quality = quality;
+        isFile = false;
         test();
     }
 
@@ -215,28 +217,26 @@ public final class YTDownloader {
     public String test() {
 
         String a = null;
-        try {
-            a = getYTCode(f);
-        } catch (Exception e) {
 
+        if (isFile) {
+            try {
+                a = getYTCode(f);
+            } catch (Exception e) {
+                return "withoutCode";
+            }
+        } else {
             a = YTLink;
         }
 
-        if (a == null) {
-            isValid = false;
-            downloadedFileName = f.getPath();
-            return "withoutCode";
-
-        }
-        if (YTLink != null || YTLink.isEmpty()) {
-            link = YTLink;
-        } else {
+        if (isFile) {
             link = makeYTLink(a);
+        } else {
+            link = YTLink;
         }
 
         try {
 
-            int ytFormatCodes = getYTFormatCodes(link);
+            /*  int ytFormatCodes =*/ getYTFormatCodes(link);
 
         } catch (Exception e) {
             isValid = false;
